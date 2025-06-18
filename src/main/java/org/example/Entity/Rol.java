@@ -1,4 +1,4 @@
-package org.example.Entidades;
+package org.example.Entity;
 
 public enum Rol {
     ADMIN,
