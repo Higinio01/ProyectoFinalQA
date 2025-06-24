@@ -5,9 +5,13 @@ import org.example.Entity.Producto;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class ProductoService {
     private final ProductoRepository productoRepository;
     private final ModelMapper modelMapper;
@@ -61,4 +65,10 @@ public class ProductoService {
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         productoRepository.delete(productoExistente);
     }
+
+    public Page<Producto> buscarProductos(String nombre, String categoria,
+                                          Double precioMin, Double precioMax, Pageable pageable) {
+        return productoRepository.buscarConFiltros(nombre, categoria, precioMin, precioMax, pageable);
+    }
+
 }
