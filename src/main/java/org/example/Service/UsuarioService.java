@@ -1,10 +1,13 @@
 package org.example.Service;
 
 import org.example.Dtos.UsuarioDto;
+import org.example.Entity.Rol;
 import org.example.Entity.Usuario;
+import org.example.Repository.RolRepository;
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,10 +15,14 @@ import java.util.List;
 @Service
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, ModelMapper modelMapper) {
+    public UsuarioService(UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
         this.usuarioRepository = usuarioRepository;
+        this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
     }
 
@@ -33,12 +40,24 @@ public class UsuarioService {
     }
 
     public UsuarioDto crearUsuario(UsuarioRequest usuarioRequest) {
+
+        if (usuarioRepository.existsByEmail(usuarioRequest.email())) {
+            throw new IllegalArgumentException("El correo electrónico ya está en uso.");
+        }
+
+        Rol rol = rolRepository.findById(usuarioRequest.idRol())
+                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con ID: " + usuarioRequest.idRol()));
+
+
         var usuario = new Usuario();
         usuario.setNombre(usuarioRequest.nombre());
         usuario.setApellido(usuarioRequest.apellido());
         usuario.setEmail(usuarioRequest.email());
-        usuario.setPassword(usuarioRequest.password());
-        usuario.setRol(usuarioRequest.rol());
+        usuario.setRol(rol);
+
+        String contraseniaTemp = usuarioRequest.password();
+        String contraseniaCodificada = passwordEncoder.encode(contraseniaTemp);
+        usuario.setPassword(contraseniaCodificada);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);
         return modelMapper.map(savedUsuario, UsuarioDto.class);
@@ -48,15 +67,26 @@ public class UsuarioService {
         var usuarioExistente = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
 
+        if (usuarioRepository.existsByEmailAndIdNot(usuarioRequest.email(), id)) {
+            throw new IllegalArgumentException("El correo electrónico ya está en uso por otro usuario.");
+        }
+
+        Rol rol = rolRepository.findById(usuarioRequest.idRol())
+                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con ID: " + usuarioRequest.idRol()));
+
         usuarioExistente.setNombre(usuarioRequest.nombre());
         usuarioExistente.setApellido(usuarioRequest.apellido());
         usuarioExistente.setEmail(usuarioRequest.email());
-        usuarioExistente.setPassword(usuarioRequest.password());
-        usuarioExistente.setRol(usuarioRequest.rol());
+        usuarioExistente.setRol(rol);
+
+        if (usuarioRequest.password() != null && !usuarioRequest.password().trim().isEmpty()) {
+            usuarioExistente.setPassword(passwordEncoder.encode(usuarioRequest.password()));
+        }
 
         Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
         return modelMapper.map(usuarioActualizado, UsuarioDto.class);
     }
+
 
     public void eliminarUsuario(Long id) {
         var usuario = usuarioRepository.findById(id)
