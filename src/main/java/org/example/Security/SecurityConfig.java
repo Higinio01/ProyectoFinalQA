@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/productos/**").hasAnyAuthority("ADMIN", "EMPLEADO", "CLIENTE")
                         .requestMatchers("/api/productos").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/usuarios").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/auth/me").authenticated()
