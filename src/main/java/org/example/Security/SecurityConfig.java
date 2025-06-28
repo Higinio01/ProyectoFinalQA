@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").hasAnyAuthority("ADMIN", "EMPLEADO", "CLIENTE")
                         .requestMatchers("/api/productos").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/usuarios").hasAnyAuthority("ADMIN", "EMPLEADO")
+                        .requestMatchers("/api/inventario").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/auth/me").authenticated()
                         .anyRequest().authenticated()
                 )
