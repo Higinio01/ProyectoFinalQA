@@ -1,8 +1,11 @@
 package org.example.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-
+@Getter
+@Setter
 @Entity
 @Table(name = "productos")
 public class Producto {
@@ -16,8 +19,9 @@ public class Producto {
 
     private String descripcion;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String categoria;
+    private Categoria categoria;
 
     @Column(nullable = false)
     private float precio;
@@ -25,51 +29,4 @@ public class Producto {
     @Column(name = "stock", nullable = false)
     private Integer cantidad;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public String getCategoria() {
-        return categoria;
-    }
-
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    public float getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(float precio) {
-        this.precio = precio;
-    }
-
-    public Integer getCantidad() {
-        return cantidad;
-    }
-
-    public void setCantidad(Integer cantidad) {
-        this.cantidad = cantidad;
-    }
 }

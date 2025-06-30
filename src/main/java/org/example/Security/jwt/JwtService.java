@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.example.Entity.Usuario;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -29,23 +30,23 @@ public class JwtService {
     public String generateToken(final Usuario usuario) {
         return buildToken(usuario, jwtExpiration);
     }
-     public String generateRefreshToken(final Usuario usuario) {
+
+    public String generateRefreshToken(final Usuario usuario) {
         return buildToken(usuario, jwtRefreshExpiration);
-     }
+    }
 
     private String buildToken(Usuario usuario, long jwtExpiration) {
-     return Jwts.builder()
-             .id(usuario.getId().toString())
-             .claims(Map.of(
-                     "nombre", usuario.getNombre(),
-                     "rol", usuario.getRol().getRolNombre()  // Agregar el rol
-             ))
-             .subject(usuario.getEmail())
-             .issuedAt(new Date(System.currentTimeMillis()))
-             .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-             .signWith(getSignInKey())
-             .compact();
-
+        return Jwts.builder()
+                .id(usuario.getId().toString())
+                .claims(Map.of(
+                        "nombre", usuario.getNombre(),
+                        "rol", usuario.getRol().getRolNombre().name()
+                ))
+                .subject(usuario.getEmail())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .signWith(getSignInKey())
+                .compact();
     }
 
     private SecretKey getSignInKey() {
@@ -54,27 +55,24 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        final Claims jwtToken = Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return jwtToken.getSubject();
+        return extractClaim(token, Claims::getSubject);
     }
 
-    private Date extractExpiration(final String token){
-        final Claims jwtToken = Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return jwtToken.getExpiration();
+    private Date extractExpiration(final String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     private boolean isTokenExpired(final String token) {
         return extractExpiration(token).before(new Date());
     }
 
+    // Método original para UserDetails (usado por el filtro)
+    public boolean isTokenValid(final String token, final UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    // Método sobrecargado para Usuario (usado por el servicio de autenticación)
     public boolean isTokenValid(final String token, final Usuario usuario) {
         final String userEmail = extractUsername(token);
         return (userEmail.equals(usuario.getEmail()) && !isTokenExpired(token));
@@ -92,6 +90,4 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-
-
 }

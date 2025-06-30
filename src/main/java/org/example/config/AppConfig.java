@@ -20,40 +20,24 @@ import java.util.List;
 @Configuration
 public class AppConfig {
 
-    private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserDetailsService userDetailsService;
 
-    public AppConfig(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
-        this.usuarioRepository = usuarioRepository;
+    public AppConfig(PasswordEncoder passwordEncoder, UserDetailsService userDetailsService) {
         this.passwordEncoder = passwordEncoder;
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return correoElectronico -> {
-            final Usuario usuario = usuarioRepository.findByEmail(correoElectronico)
-                    .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + correoElectronico));
-
-            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(usuario.getRol().getRolNombre().name()));
-
-            return org.springframework.security.core.userdetails.User.builder()
-                    .username(usuario.getEmail())
-                    .password(usuario.getPassword())
-                    .authorities(authorities)
-                    .build();
-        };
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
-        daoAuthenticationProvider.setUserDetailsService(userDetailsService());
+        daoAuthenticationProvider.setUserDetailsService(userDetailsService);
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder);
         return daoAuthenticationProvider;
     }
 
     @Bean
-    public AuthenticationManager autenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
 }

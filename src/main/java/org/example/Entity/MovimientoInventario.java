@@ -1,9 +1,15 @@
 package org.example.Entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+@Getter
+@Setter
+@Entity
+@Table(name = "movimiento_inventario")
 public class MovimientoInventario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,7 +19,7 @@ public class MovimientoInventario {
     @JoinColumn(name = "producto_id", nullable = false)
     private Producto producto;
 
-    private Integer cantidad; // Positivo: entrada, negativo: salida
-    private String tipoMovimiento; // "ENTRADA" o "SALIDA"
+    private Integer cantidad;
+    private String tipoMovimiento;
     private LocalDateTime fechaMovimiento;
 }

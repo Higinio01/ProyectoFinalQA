@@ -1,6 +1,7 @@
 package org.example.Service;
 
 import org.example.Dtos.ProductoDto;
+import org.example.Entity.Categoria;
 import org.example.Entity.Producto;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
@@ -38,7 +39,12 @@ public class ProductoService {
         var producto = new Producto();
         producto.setNombre(request.nombre());
         producto.setDescripcion(request.descripcion());
-        producto.setCategoria(request.categoria());
+        try {
+            Categoria categoria = Categoria.valueOf(request.categoria().toUpperCase());
+            producto.setCategoria(categoria);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Categoría inválida: " + request.categoria());
+        }
         producto.setPrecio(request.precio());
         producto.setCantidad(request.cantidad());
 
@@ -52,7 +58,14 @@ public class ProductoService {
 
         productoExistente.setNombre(request.nombre());
         productoExistente.setDescripcion(request.descripcion());
-        productoExistente.setCategoria(request.categoria());
+
+        try {
+            Categoria categoria = Categoria.valueOf(request.categoria().toUpperCase());
+            productoExistente.setCategoria(categoria);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Categoría inválida: " + request.categoria());
+        }
+
         productoExistente.setPrecio(request.precio());
         productoExistente.setCantidad(request.cantidad());
 
