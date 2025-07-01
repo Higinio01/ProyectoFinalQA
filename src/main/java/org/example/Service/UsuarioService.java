@@ -87,7 +87,6 @@ public class UsuarioService {
         return modelMapper.map(usuarioActualizado, UsuarioDto.class);
     }
 
-
     public void eliminarUsuario(Long id) {
         var usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
