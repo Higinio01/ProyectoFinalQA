@@ -3,6 +3,7 @@ package org.example.Service;
 import org.example.Dtos.ProductoDto;
 import org.example.Entity.Categoria;
 import org.example.Entity.Producto;
+import org.example.Exception.ProductoException;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.modelmapper.ModelMapper;
@@ -24,7 +25,7 @@ public class ProductoService {
 
     public ProductoDto productoPorId(Long id) {
         var producto = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
         return modelMapper.map(producto, ProductoDto.class);
     }
 
@@ -36,15 +37,19 @@ public class ProductoService {
     }
 
     public ProductoDto crearProducto(ProductoRequest request) {
+        validarPrecioYCantidad((double) request.precio(), request.cantidad());
+
         var producto = new Producto();
         producto.setNombre(request.nombre());
         producto.setDescripcion(request.descripcion());
+
         try {
             Categoria categoria = Categoria.valueOf(request.categoria().toUpperCase());
             producto.setCategoria(categoria);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Categoría inválida: " + request.categoria());
+            throw new ProductoException.CategoriaInvalida("Categoría inválida: " + request.categoria());
         }
+
         producto.setPrecio(request.precio());
         producto.setCantidad(request.cantidad());
 
@@ -54,7 +59,9 @@ public class ProductoService {
 
     public ProductoDto actualizarProducto(Long id, ProductoRequest request) {
         var productoExistente = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
+
+        validarPrecioYCantidad((double) request.precio(), request.cantidad());
 
         productoExistente.setNombre(request.nombre());
         productoExistente.setDescripcion(request.descripcion());
@@ -63,7 +70,7 @@ public class ProductoService {
             Categoria categoria = Categoria.valueOf(request.categoria().toUpperCase());
             productoExistente.setCategoria(categoria);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Categoría inválida: " + request.categoria());
+            throw new ProductoException.CategoriaInvalida("Categoría inválida: " + request.categoria());
         }
 
         productoExistente.setPrecio(request.precio());
@@ -75,7 +82,7 @@ public class ProductoService {
 
     public void eliminarProducto(Long id) {
         var productoExistente = productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
+                .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
         productoRepository.delete(productoExistente);
     }
 
@@ -84,4 +91,12 @@ public class ProductoService {
         return productoRepository.buscarConFiltros(nombre, categoria, precioMin, precioMax, pageable);
     }
 
+    private void validarPrecioYCantidad(Double precio, Integer cantidad) {
+        if (precio != null && precio < 0) {
+            throw new ProductoException.ValorInvalido("El precio no puede ser negativo: " + precio);
+        }
+        if (cantidad != null && cantidad < 0) {
+            throw new ProductoException.ValorInvalido("La cantidad no puede ser negativa: " + cantidad);
+        }
+    }
 }

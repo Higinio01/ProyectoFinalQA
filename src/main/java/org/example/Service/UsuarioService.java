@@ -6,6 +6,7 @@ import org.example.Entity.ApiToken;
 import org.example.Entity.EstadoUsuario;
 import org.example.Entity.Rol;
 import org.example.Entity.Usuario;
+import org.example.Exception.UsuarioException;
 import org.example.Repository.ApiTokenRepository;
 import org.example.Repository.RolRepository;
 import org.example.Repository.UsuarioRepository;
@@ -26,7 +27,9 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
 
-    public UsuarioService(ApiTokenRepository apiTokenRepository, JwtService jwtService, UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+    public UsuarioService(ApiTokenRepository apiTokenRepository, JwtService jwtService,
+                          UsuarioRepository usuarioRepository, RolRepository rolRepository,
+                          PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
         this.apiTokenRepository = apiTokenRepository;
         this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
@@ -37,7 +40,7 @@ public class UsuarioService {
 
     public UsuarioDto usuarioPorId(Long id) {
         var usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+                .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
         return modelMapper.map(usuario, UsuarioDto.class);
     }
 
@@ -49,22 +52,20 @@ public class UsuarioService {
     }
 
     public UsuarioDto crearUsuario(UsuarioRequest usuarioRequest) {
-
         if (usuarioRepository.existsByEmail(usuarioRequest.email())) {
-            throw new IllegalArgumentException("El correo electrónico ya está en uso.");
+            throw new UsuarioException.EmailDuplicado("El correo electrónico ya está en uso: " + usuarioRequest.email());
         }
 
         Rol rol = rolRepository.findById(usuarioRequest.idRol())
-                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con ID: " + usuarioRequest.idRol()));
+                .orElseThrow(() -> new UsuarioException.RolNoEncontrado("Rol no encontrado con ID: " + usuarioRequest.idRol()));
 
-        var usuario = new Usuario();
+        Usuario usuario = new Usuario();
         usuario.setNombre(usuarioRequest.nombre());
         usuario.setApellido(usuarioRequest.apellido());
         usuario.setEmail(usuarioRequest.email());
         usuario.setRol(rol);
 
-        String contraseniaTemp = usuarioRequest.password();
-        String contraseniaCodificada = passwordEncoder.encode(contraseniaTemp);
+        String contraseniaCodificada = passwordEncoder.encode(usuarioRequest.password());
         usuario.setPassword(contraseniaCodificada);
         usuario.setEstado(EstadoUsuario.ACTIVO);
 
@@ -78,15 +79,15 @@ public class UsuarioService {
     }
 
     public UsuarioDto actualizarUsuario(Long id, UsuarioRequest usuarioRequest) {
-        var usuarioExistente = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+        Usuario usuarioExistente = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
 
         if (usuarioRepository.existsByEmailAndIdNot(usuarioRequest.email(), id)) {
-            throw new IllegalArgumentException("El correo electrónico ya está en uso por otro usuario.");
+            throw new UsuarioException.EmailDuplicado("El correo electrónico ya está en uso por otro usuario: " + usuarioRequest.email());
         }
 
         Rol rol = rolRepository.findById(usuarioRequest.idRol())
-                .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con ID: " + usuarioRequest.idRol()));
+                .orElseThrow(() -> new UsuarioException.RolNoEncontrado("Rol no encontrado con ID: " + usuarioRequest.idRol()));
 
         usuarioExistente.setNombre(usuarioRequest.nombre());
         usuarioExistente.setApellido(usuarioRequest.apellido());
@@ -104,7 +105,7 @@ public class UsuarioService {
     @Transactional
     public String cambiarEstado(Long id, EstadoUsuario nuevoEstado) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
 
         usuario.setEstado(nuevoEstado);
         usuarioRepository.save(usuario);
@@ -113,8 +114,8 @@ public class UsuarioService {
     }
 
     public void eliminarUsuario(Long id) {
-        var usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
         usuarioRepository.delete(usuario);
     }
 }
