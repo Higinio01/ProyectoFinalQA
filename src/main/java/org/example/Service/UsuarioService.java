@@ -1,11 +1,14 @@
 package org.example.Service;
 
 import org.example.Dtos.UsuarioDto;
+import org.example.Entity.ApiToken;
 import org.example.Entity.Rol;
 import org.example.Entity.Usuario;
+import org.example.Repository.ApiTokenRepository;
 import org.example.Repository.RolRepository;
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
+import org.example.Security.jwt.JwtService;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,12 +17,16 @@ import java.util.List;
 
 @Service
 public class UsuarioService {
+    private final ApiTokenRepository apiTokenRepository;
+    private final JwtService jwtService;
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
 
-    public UsuarioService(UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+    public UsuarioService(ApiTokenRepository apiTokenRepository, JwtService jwtService, UsuarioRepository usuarioRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+        this.apiTokenRepository = apiTokenRepository;
+        this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
@@ -48,7 +55,6 @@ public class UsuarioService {
         Rol rol = rolRepository.findById(usuarioRequest.idRol())
                 .orElseThrow(() -> new IllegalArgumentException("Rol no encontrado con ID: " + usuarioRequest.idRol()));
 
-
         var usuario = new Usuario();
         usuario.setNombre(usuarioRequest.nombre());
         usuario.setApellido(usuarioRequest.apellido());
@@ -58,6 +64,10 @@ public class UsuarioService {
         String contraseniaTemp = usuarioRequest.password();
         String contraseniaCodificada = passwordEncoder.encode(contraseniaTemp);
         usuario.setPassword(contraseniaCodificada);
+
+        String jwt = jwtService.generateToken(usuario);
+        ApiToken apiToken = new ApiToken(usuario, jwt);
+        apiTokenRepository.save(apiToken);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);
         return modelMapper.map(savedUsuario, UsuarioDto.class);

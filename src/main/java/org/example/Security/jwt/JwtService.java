@@ -21,21 +21,11 @@ public class JwtService {
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${application.security.jwt.expiration}")
-    private long jwtExpiration;
-
-    @Value("${application.security.jwt.refresh-token.expiration}")
-    private long jwtRefreshExpiration;
-
     public String generateToken(final Usuario usuario) {
-        return buildToken(usuario, jwtExpiration);
+        return buildToken(usuario);
     }
 
-    public String generateRefreshToken(final Usuario usuario) {
-        return buildToken(usuario, jwtRefreshExpiration);
-    }
-
-    private String buildToken(Usuario usuario, long jwtExpiration) {
+    private String buildToken(Usuario usuario) {
         return Jwts.builder()
                 .id(usuario.getId().toString())
                 .claims(Map.of(
@@ -44,7 +34,6 @@ public class JwtService {
                 ))
                 .subject(usuario.getEmail())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSignInKey())
                 .compact();
     }

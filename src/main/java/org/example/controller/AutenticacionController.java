@@ -29,11 +29,6 @@ public class AutenticacionController {
         return ResponseEntity.ok(token);
     }
 
-    @PostMapping("/refresh")
-    public TokenResponse refreshToken(@RequestHeader(HttpHeaders.AUTHORIZATION) final String authHeader) {
-        return autenticacionService.refreshToken(authHeader);
-    }
-
     @GetMapping("/me")
     public ResponseEntity<Long> getCurrentUserId(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -47,6 +42,5 @@ public class AutenticacionController {
                 .map(usuario -> ResponseEntity.ok(usuario.getId()))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
-
 
 }

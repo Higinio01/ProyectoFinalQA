@@ -16,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -35,10 +34,12 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/debug/cache").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").hasAnyAuthority("ADMIN", "EMPLEADO", "CLIENTE")
                         .requestMatchers("/api/productos").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/usuarios").hasAnyAuthority("ADMIN", "EMPLEADO")
+                        .requestMatchers("/api/usuarios/**").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/inventario").hasAnyAuthority("ADMIN", "EMPLEADO")
                         .requestMatchers("/api/auth/me").authenticated()
                         .anyRequest().authenticated()
@@ -64,6 +65,6 @@ public class SecurityConfig {
         if (token == null || !token.startsWith("Bearer ")) {
             throw new BadCredentialsException("Invalid token");
         }
-
+        // Intencionalmente no hace nada
     }
 }

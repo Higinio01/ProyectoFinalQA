@@ -7,10 +7,8 @@ import lombok.Setter;
 @Getter
 public class TokenResponse {
     private String jwtToken;
-    private String refreshToken;
 
-    public TokenResponse(String jwtToken, String refreshToken) {
+    public TokenResponse(String jwtToken) {
         this.jwtToken = jwtToken;
-        this.refreshToken = refreshToken;
     }
 }

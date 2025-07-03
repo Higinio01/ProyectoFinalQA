@@ -1,7 +1,6 @@
 package org.example.Entity;
 
 import jakarta.persistence.*;
-import org.example.Entity.Rol;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,4 +30,7 @@ public class Usuario {
     @JoinColumn(name = "id_rol", nullable = false)
     private Rol rol;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoUsuario estado;
 }
