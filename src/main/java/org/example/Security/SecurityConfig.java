@@ -1,6 +1,9 @@
 package org.example.Security;
 
 import org.example.Security.jwt.JwtAuthFilter;
+import org.example.Security.jwt.TokenValidationCache;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -22,10 +25,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final TokenValidationCache tokenValidationCache;
     private final AuthenticationProvider authenticationProvider;
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, AuthenticationProvider authenticationProvider) {
+
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, TokenValidationCache tokenValidationCache, AuthenticationProvider authenticationProvider) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.tokenValidationCache = tokenValidationCache;
         this.authenticationProvider = authenticationProvider;
     }
 
@@ -48,16 +55,17 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout ->
-                        logout.logoutUrl("/api/auth/logout")
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
                         .addLogoutHandler((request, response, authentication) -> {
                             final var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-                            logout(authHeader);
+                            invalidateTokenInCache(authHeader); // ✅ Llamada correcta ahora
                         })
                         .logoutSuccessHandler((request, response, authentication) -> {
                             SecurityContextHolder.clearContext();
                         })
                 );
+
 
         return http.build();
     }
@@ -66,6 +74,24 @@ public class SecurityConfig {
         if (token == null || !token.startsWith("Bearer ")) {
             throw new BadCredentialsException("Invalid token");
         }
-        // Intencionalmente no hace nada
+        String jwt = token.substring(7);
+        tokenValidationCache.invalidate(jwt);
+        log.info("🧹 Token JWT removido de la cache al hacer logout: {}", jwt.substring(0, Math.min(jwt.length(), 20)));
     }
+
+    private void invalidateTokenInCache(final String token) {
+        if (token == null || !token.startsWith("Bearer ")) {
+            log.warn("Intento de logout sin token o token inválido.");
+            return;
+        }
+        String jwt = token.substring(7);
+        boolean existed = tokenValidationCache.invalidateAndCheck(jwt);
+        if (existed) {
+            log.info("🧹 JWT removido de cache en logout: {}", jwt.substring(0, Math.min(jwt.length(), 20)));
+        } else {
+            log.info("⚠️ JWT solicitado para logout no existía en cache (se intentó borrar igual): {}", jwt.substring(0, Math.min(jwt.length(), 20)));
+        }
+    }
+
+
 }

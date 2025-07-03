@@ -23,21 +23,18 @@ public class TokenValidationCache {
         tokenCache.put(token, isValid);
     }
 
-    public void invalidate(String token) {
-        tokenCache.invalidate(token);
-    }
-
     public long size() {
         return tokenCache.estimatedSize();
     }
 
-    // 🧪 MÉTODO DE PRUEBA TEMPORAL
-    public void testCache() {
-        System.out.println("🧪 PROBANDO CACHE...");
-        tokenCache.put("test-token", true);
-        System.out.println("🧪 Guardado test-token = true");
-        System.out.println("🧪 Tamaño después de guardar: " + tokenCache.estimatedSize());
-        Boolean result = tokenCache.getIfPresent("test-token");
-        System.out.println("🧪 Recuperado test-token = " + result);
+    public void invalidate(String token) {
+        tokenCache.invalidate(token);
     }
+
+    public boolean invalidateAndCheck(String token) {
+        boolean existed = tokenCache.asMap().containsKey(token);
+        tokenCache.invalidate(token);
+        return existed;
+    }
+
 }
