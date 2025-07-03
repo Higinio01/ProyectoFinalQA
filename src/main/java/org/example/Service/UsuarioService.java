@@ -1,7 +1,9 @@
 package org.example.Service;
 
+import jakarta.transaction.Transactional;
 import org.example.Dtos.UsuarioDto;
 import org.example.Entity.ApiToken;
+import org.example.Entity.EstadoUsuario;
 import org.example.Entity.Rol;
 import org.example.Entity.Usuario;
 import org.example.Repository.ApiTokenRepository;
@@ -64,12 +66,14 @@ public class UsuarioService {
         String contraseniaTemp = usuarioRequest.password();
         String contraseniaCodificada = passwordEncoder.encode(contraseniaTemp);
         usuario.setPassword(contraseniaCodificada);
-
-        String jwt = jwtService.generateToken(usuario);
-        ApiToken apiToken = new ApiToken(usuario, jwt);
-        apiTokenRepository.save(apiToken);
+        usuario.setEstado(EstadoUsuario.ACTIVO);
 
         Usuario savedUsuario = usuarioRepository.save(usuario);
+
+        String jwt = jwtService.generateToken(savedUsuario);
+        ApiToken apiToken = new ApiToken(savedUsuario, jwt);
+        apiTokenRepository.save(apiToken);
+
         return modelMapper.map(savedUsuario, UsuarioDto.class);
     }
 
@@ -95,6 +99,17 @@ public class UsuarioService {
 
         Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
         return modelMapper.map(usuarioActualizado, UsuarioDto.class);
+    }
+
+    @Transactional
+    public String cambiarEstado(Long id, EstadoUsuario nuevoEstado) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+
+        usuario.setEstado(nuevoEstado);
+        usuarioRepository.save(usuario);
+
+        return "Estado del usuario actualizado a " + nuevoEstado;
     }
 
     public void eliminarUsuario(Long id) {

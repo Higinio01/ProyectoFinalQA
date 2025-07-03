@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import org.example.Dtos.UsuarioDto;
+import org.example.Entity.EstadoUsuario;
 import org.example.Request.UsuarioRequest;
 import org.example.Service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,20 @@ public class UsuarioController {
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDto> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioRequest usuarioRequest) {
         return ResponseEntity.ok(usuarioService.actualizarUsuario(id, usuarioRequest));
+    }
+
+    @PutMapping("/{id}/estado/{nuevoEstado}")
+    public ResponseEntity<String> actualizarEstadoUsuario(
+            @PathVariable Long id,
+            @PathVariable String nuevoEstado) {
+
+        try {
+            EstadoUsuario estado = EstadoUsuario.valueOf(nuevoEstado.toUpperCase());
+            String mensaje = usuarioService.cambiarEstado(id, estado);
+            return ResponseEntity.ok(mensaje);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Estado inválido. Usa: ACTIVO, INACTIVO o BLOQUEADO.");
+        }
     }
 
     // Eliminar un usuario

@@ -1,5 +1,6 @@
 package org.example.Request;
 
+import org.example.Entity.EstadoUsuario;
 import org.example.Entity.Rol;
 import org.example.Entity.RolNombre;
 
