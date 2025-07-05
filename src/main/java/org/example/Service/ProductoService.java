@@ -8,6 +8,7 @@ import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -87,8 +88,8 @@ public class ProductoService {
     }
 
     public Page<Producto> buscarProductos(String nombre, String categoria,
-                                          Double precioMin, Double precioMax, Pageable pageable) {
-        return productoRepository.buscarConFiltros(nombre, categoria, precioMin, precioMax, pageable);
+                                          Double precioMin, Double precioMax, String buscador, Pageable pageable) {
+        return productoRepository.buscarConFiltros(nombre, categoria, precioMin, precioMax, buscador, pageable);
     }
 
     private void validarPrecioYCantidad(Double precio, Integer cantidad) {
@@ -99,4 +100,12 @@ public class ProductoService {
             throw new ProductoException.ValorInvalido("La cantidad no puede ser negativa: " + cantidad);
         }
     }
+
+    public Page<ProductoDto> obtenerProductosPaginados(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Producto> productosPage = productoRepository.findAll(pageable);
+
+        return productosPage.map(producto -> modelMapper.map(producto, ProductoDto.class));
+    }
+
 }
