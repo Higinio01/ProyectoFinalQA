@@ -13,6 +13,10 @@ import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.example.Security.jwt.JwtService;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -118,4 +122,11 @@ public class UsuarioService {
                 .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
         usuarioRepository.delete(usuario);
     }
+
+    public Page<UsuarioDto> obtenerUsuariosPaginados(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<Usuario> usuariosPage = usuarioRepository.findAll(pageable);
+        return usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class));
+    }
+
 }
