@@ -5,6 +5,7 @@ import org.example.Entity.EstadoUsuario;
 import org.example.Request.UsuarioRequest;
 import org.example.Service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +24,13 @@ public class UsuarioController {
 
     // Obtener todos los usuarios
     @GetMapping
-    public ResponseEntity<List<UsuarioDto>> obtenerTodos() {
-        return ResponseEntity.ok(usuarioService.obtenerTodosLosUsuarios());
+    public ResponseEntity<Page<UsuarioDto>> obtenerTodos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(usuarioService.obtenerUsuariosPaginados(page, size));
     }
+
 
     // Obtener un usuario por ID
     @GetMapping("/{id}")
