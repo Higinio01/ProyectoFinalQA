@@ -147,4 +147,10 @@ public class ProductoSteps {
         assertNotNull(excepcionCapturada);
         assertEquals(mensajeEsperado, excepcionCapturada.getMessage());
     }
+
+    @Then("el producto no existe y no ocurre error")
+    public void elProductoNoExisteYNoOcurreError() {
+        assertNull(excepcionCapturada);
+    }
+
 }
