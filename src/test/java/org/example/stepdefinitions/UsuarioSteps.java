@@ -10,21 +10,29 @@ import org.example.Repository.RolRepository;
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.example.Service.UsuarioService;
+import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.stereotype.Component;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
 public class UsuarioSteps {
 
-    @Autowired private UsuarioService usuarioService;
-    @Autowired private UsuarioRepository usuarioRepository;
-    @Autowired private RolRepository rolRepository;
+    private final UsuarioService usuarioService;
+    private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
+
+    public UsuarioSteps(UsuarioService usuarioService,
+                        UsuarioRepository usuarioRepository,
+                        RolRepository rolRepository) {
+        this.usuarioService = usuarioService;
+        this.usuarioRepository = usuarioRepository;
+        this.rolRepository = rolRepository;
+    }
 
     private EstadoUsuario estado;
     private UsuarioDto usuarioCreado;
@@ -36,7 +44,9 @@ public class UsuarioSteps {
         RolNombre nombre = RolNombre.valueOf(rolNombre.toUpperCase());
 
         if (rolRepository.findByRolNombre(nombre).isEmpty()) {
-            throw new RuntimeException("El rol " + nombre + " no está cargado en la base de datos para pruebas.");
+            Rol rol = new Rol();
+            rol.setRolNombre(nombre);
+            rolRepository.save(rol);
         }
     }
 

@@ -52,4 +52,3 @@ Feature: Gestionar productos en el inventario
   Scenario: No se puede obtener un producto por ID inexistente
     When solicito el producto con ID -1
     Then ocurre un error al obtener el producto con el mensaje "Producto no encontrado con id: -1"
-

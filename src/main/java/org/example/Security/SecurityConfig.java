@@ -92,6 +92,4 @@ public class SecurityConfig {
             log.info("⚠️ JWT solicitado para logout no existía en cache (se intentó borrar igual): {}", jwt.substring(0, Math.min(jwt.length(), 20)));
         }
     }
-
-
 }

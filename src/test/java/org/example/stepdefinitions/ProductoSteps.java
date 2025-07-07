@@ -9,20 +9,24 @@ import org.example.Request.ProductoRequest;
 import org.example.Service.ProductoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Component;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
 import static org.junit.Assert.*;
 
-@SpringBootTest
-@ActiveProfiles("test")
+
 public class ProductoSteps {
 
-    @Autowired
+
     private ProductoRepository productoRepository;
-    @Autowired
     private ProductoService productoService;
+
+    public ProductoSteps(ProductoRepository productoRepository, ProductoService productoService) {
+        this.productoRepository = productoRepository;
+        this.productoService = productoService;
+    }
 
     private ProductoDto productoCreado;
     private ProductoDto productoObtenido;

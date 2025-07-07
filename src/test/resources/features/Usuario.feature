@@ -47,8 +47,6 @@ Feature: Gestión de usuarios en el sistema
     When intento crear un usuario con nombre "Laura", apellido "Perez", email "laura@example.com", password "password123" y rol "INEXISTENTE"
     Then ocurre un error con el mensaje "Rol no encontrado"
 
-  # Escenarios extendidos con ID, descomentarlos al implementar endpoints con ID
-
   Scenario: No se puede crear un usuario con email ya registrado usando ID
     Given existe un rol con ID 1
     And existe un usuario con nombre "Mario", apellido "Lopez", email "repetido@example.com", password "password123" y rol ID 1
@@ -61,29 +59,3 @@ Feature: Gestión de usuarios en el sistema
     And existe otro usuario con ID 2 y email "usado@example.com"
     When intento actualizar el usuario con ID 1 a email "usado@example.com"
     Then ocurre un error con el mensaje "El correo electrónico ya está en uso por otro usuario: usado@example.com"
-
-#  Scenario: Cambiar estado de un usuario a BLOQUEADO usando ID
-#    Given existe un usuario con ID 1 y estado ACTIVO
-#    When cambio el estado del usuario con ID 1 a BLOQUEADO
-#    Then el usuario con ID 1 tiene estado BLOQUEADO
-
-  # Scenario: Eliminar un usuario correctamente por ID
-  #   Given existe un usuario con ID 3 y email "eliminar@example.com"
-  #   When elimino el usuario con ID 3
-  #   Then el usuario con ID 3 ya no existe en la base de datos
-
-  # Scenario: No se puede eliminar un usuario inexistente por ID
-  #   Given no existe un usuario con ID 9999
-  #   When intento eliminar el usuario con ID 9999
-  #   Then ocurre un error con el mensaje "Usuario no encontrado con id: 9999"
-
-  # Scenario: Obtener la primera página de usuarios con tamaño 2
-  #   Given existen al menos 3 usuarios registrados
-  #   When solicito la página 0 de usuarios con tamaño 2
-  #   Then se devuelven 2 usuarios en la respuesta
-
-  # Scenario: Actualizar nombre y apellido de un usuario por ID
-  #   Given existe un rol con ID 1
-  #   And existe un usuario con ID 4, nombre "Pedro", apellido "Lopez"
-  #   When actualizo el usuario con ID 4 a nombre "Pedro Pablo", apellido "Lopez Perez"
-  #   Then el usuario con ID 4 tiene nombre "Pedro Pablo" y apellido "Lopez Perez"
