@@ -22,4 +22,9 @@ public class UsuarioException extends RuntimeException {
             super(message);
         }
     }
+
+    public static class DatosInvalidos extends UsuarioException {
+        public DatosInvalidos(String message) { super(message); }
+    }
+
 }

@@ -1,4 +1,4 @@
-Feature: Gestion de usuarios en el sistema
+Feature: Gestión de usuarios en el sistema
 
   Scenario: Crear un usuario correctamente
     Given existe un rol con nombre "CLIENTE"
@@ -11,12 +11,79 @@ Feature: Gestion de usuarios en el sistema
     When actualizo el usuario con email "ana@example.com" a nombre "Ana Maria", apellido "Lopez Perez", email "anamaria@example.com", password "newpass456" y rol "CLIENTE"
     Then el usuario con email "anamaria@example.com" tiene nombre "Ana Maria"
 
-  Scenario: Eliminar un usuario correctamente
+  Scenario: Eliminar un usuario correctamente por email
     Given existe un rol con nombre "CLIENTE"
     And existe un usuario con nombre "Pedro", apellido "Gomez", email "pedro@example.com", password "password123" y rol "CLIENTE"
     When elimino el usuario con email "pedro@example.com"
     Then el usuario con email "pedro@example.com" ya no existe en la base de datos
 
-  Scenario: No se puede eliminar un usuario inexistente
+  Scenario: No se puede eliminar un usuario inexistente por email
     When intento eliminar el usuario con email "inexistente@example.com"
     Then ocurre un error con el mensaje "Usuario no encontrado"
+
+  Scenario: Bloquear un usuario correctamente
+    Given existe un rol con nombre "CLIENTE"
+    And existe un usuario con nombre "Carla", apellido "Diaz", email "carla@example.com", password "password123" y rol "CLIENTE"
+    When bloqueo el usuario con email "carla@example.com"
+    Then el usuario con email "carla@example.com" tiene estado "BLOQUEADO"
+
+  Scenario: No se puede crear un usuario con email repetido
+    Given existe un rol con nombre "CLIENTE"
+    And existe un usuario con nombre "Lucas", apellido "Martinez", email "lucas@example.com", password "password123" y rol "CLIENTE"
+    When intento crear un usuario con nombre "Lucas", apellido "Martinez", email "lucas@example.com", password "password123" y rol "CLIENTE"
+    Then ocurre un error con el mensaje "ya está en uso"
+
+  Scenario: No se puede crear un usuario sin datos requeridos
+    Given existe un rol con nombre "CLIENTE"
+    When intento crear un usuario con nombre "", apellido "Gomez", email "", password "password123" y rol "CLIENTE"
+    Then ocurre un error con el mensaje "Todos los campos son obligatorios"
+
+  Scenario: Crear un usuario con rol ADMIN
+    Given existe un rol con nombre "ADMIN"
+    When creo un usuario con nombre "Jose", apellido "Ramirez", email "jose@example.com", password "adminpass", rol "ADMIN"
+    Then el usuario con email "jose@example.com" tiene rol "ADMIN"
+
+  Scenario: No se puede crear un usuario con un rol inexistente por nombre
+    When intento crear un usuario con nombre "Laura", apellido "Perez", email "laura@example.com", password "password123" y rol "INEXISTENTE"
+    Then ocurre un error con el mensaje "Rol no encontrado"
+
+  # Escenarios extendidos con ID, descomentarlos al implementar endpoints con ID
+
+  Scenario: No se puede crear un usuario con email ya registrado usando ID
+    Given existe un rol con ID 1
+    And existe un usuario con nombre "Mario", apellido "Lopez", email "repetido@example.com", password "password123" y rol ID 1
+    When intento crear un usuario con nombre "Repetido", apellido "Perez", email "repetido@example.com", password "pass123" y rol ID 1
+    Then ocurre un error con el mensaje "El correo electrónico ya está en uso: repetido@example.com"
+
+  Scenario: No se puede actualizar un usuario con un email duplicado usando ID
+    Given existe un rol con ID 1
+    And existe un usuario con ID 1 y email "original@example.com"
+    And existe otro usuario con ID 2 y email "usado@example.com"
+    When intento actualizar el usuario con ID 1 a email "usado@example.com"
+    Then ocurre un error con el mensaje "El correo electrónico ya está en uso por otro usuario: usado@example.com"
+
+#  Scenario: Cambiar estado de un usuario a BLOQUEADO usando ID
+#    Given existe un usuario con ID 1 y estado ACTIVO
+#    When cambio el estado del usuario con ID 1 a BLOQUEADO
+#    Then el usuario con ID 1 tiene estado BLOQUEADO
+
+  # Scenario: Eliminar un usuario correctamente por ID
+  #   Given existe un usuario con ID 3 y email "eliminar@example.com"
+  #   When elimino el usuario con ID 3
+  #   Then el usuario con ID 3 ya no existe en la base de datos
+
+  # Scenario: No se puede eliminar un usuario inexistente por ID
+  #   Given no existe un usuario con ID 9999
+  #   When intento eliminar el usuario con ID 9999
+  #   Then ocurre un error con el mensaje "Usuario no encontrado con id: 9999"
+
+  # Scenario: Obtener la primera página de usuarios con tamaño 2
+  #   Given existen al menos 3 usuarios registrados
+  #   When solicito la página 0 de usuarios con tamaño 2
+  #   Then se devuelven 2 usuarios en la respuesta
+
+  # Scenario: Actualizar nombre y apellido de un usuario por ID
+  #   Given existe un rol con ID 1
+  #   And existe un usuario con ID 4, nombre "Pedro", apellido "Lopez"
+  #   When actualizo el usuario con ID 4 a nombre "Pedro Pablo", apellido "Lopez Perez"
+  #   Then el usuario con ID 4 tiene nombre "Pedro Pablo" y apellido "Lopez Perez"

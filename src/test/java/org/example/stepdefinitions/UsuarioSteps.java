@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -23,200 +22,102 @@ import static org.junit.Assert.*;
 @ActiveProfiles("test")
 public class UsuarioSteps {
 
-    @Autowired
-    private UsuarioService usuarioService;
+    @Autowired private UsuarioService usuarioService;
+    @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private RolRepository rolRepository;
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private RolRepository rolRepository;
-
+    private EstadoUsuario estado;
     private UsuarioDto usuarioCreado;
     private Exception exceptionCapturada;
     private Usuario usuarioExistente;
 
-    // ---------- CREACIÓN DE USUARIO ----------
-
     @Given("existe un rol con nombre {string}")
     public void existeUnRolConNombre(String rolNombre) {
         RolNombre nombre = RolNombre.valueOf(rolNombre.toUpperCase());
+
         if (rolRepository.findByRolNombre(nombre).isEmpty()) {
-            Rol rol = new Rol();
-            rol.setRolNombre(nombre);
-            rolRepository.save(rol);
+            throw new RuntimeException("El rol " + nombre + " no está cargado en la base de datos para pruebas.");
         }
     }
 
-    @Given("no existe ningún rol en el sistema")
-    public void noExisteNingunRolEnElSistema() {
-        // No borramos nada, asumimos que no existe el rol solicitado para este escenario
+    @Given("existe un rol con ID {long}")
+    public void existeUnRolConId(Long id) {
+        rolRepository.findById(id).orElseGet(() -> {
+            Rol rol = new Rol();
+            rol.setId(id);
+            rol.setRolNombre(RolNombre.CLIENTE);
+            return rolRepository.save(rol);
+        });
     }
 
     @When("creo un usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol {string}")
     public void creoUnUsuario(String nombre, String apellido, String email, String password, String rolNombre) {
         try {
-            Rol rol = rolRepository.findAll().stream()
-                    .filter(r -> r.getRolNombre().name().equals(rolNombre.toUpperCase()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado para pruebas"));
-
+            Rol rol = buscarRolPorNombre(rolNombre);
             String emailFinal = asegurarEmailUnico(email);
-
-            UsuarioRequest request = new UsuarioRequest(nombre, apellido, emailFinal, password, rol.getId());
-            usuarioCreado = usuarioService.crearUsuario(request);
+            usuarioCreado = usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, emailFinal, password, rol.getId()));
         } catch (Exception e) {
             exceptionCapturada = e;
         }
+    }
+
+    @When("creo un usuario con nombre {string}, apellido {string}, email {string}, password {string}, rol {string}")
+    public void creoUnUsuarioAlternativo(String nombre, String apellido, String email, String password, String rolNombre) {
+        creoUnUsuario(nombre, apellido, email, password, rolNombre);
     }
 
     @When("intento crear un usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol {string}")
-    public void intentoCrearUsuarioConRolInexistente(String nombre, String apellido, String email, String password, String rolNombre) {
+    public void intentoCrearUsuario(String nombre, String apellido, String email, String password, String rolNombre) {
         try {
-            // Usar ID: 1 para que coincida con el mensaje esperado
-            UsuarioRequest request = new UsuarioRequest(nombre, apellido, email, password, 1L);
-            usuarioCreado = usuarioService.crearUsuario(request);
+            Rol rol = buscarRolPorNombre(rolNombre);
+            usuarioCreado = usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, email, password, rol.getId()));
         } catch (Exception e) {
             exceptionCapturada = e;
         }
     }
 
-    @When("intento crear otro usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol {string}")
-    public void intentoCrearUsuarioDuplicado(String nombre, String apellido, String email, String password, String rolNombre) {
+    @When("intento crear un usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol ID {long}")
+    public void intentoCrearUsuarioConRolId(String nombre, String apellido, String email, String password, Long rolId) {
         try {
-            // NO usar asegurarEmailUnico aquí porque queremos que falle por email duplicado
-            Rol rol = rolRepository.findAll().stream()
-                    .filter(r -> r.getRolNombre().name().equals(rolNombre.toUpperCase()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado para pruebas"));
-
-            UsuarioRequest request = new UsuarioRequest(nombre, apellido, email, password, rol.getId());
-            usuarioCreado = usuarioService.crearUsuario(request);
+            usuarioCreado = usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, email, password, rolId));
         } catch (Exception e) {
-            this.exceptionCapturada = e;
+            exceptionCapturada = e;
         }
     }
-
-    @Then("el usuario con email {string} aparece en la lista de usuarios")
-    public void elUsuarioApareceEnLaLista(String email) {
-        assertTrue(usuarioRepository.existsByEmail(email));
-        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
-        assertEquals(email, usuario.getEmail());
-        assertEquals(EstadoUsuario.ACTIVO, usuario.getEstado());
-        assertNotEquals("password123", usuario.getPassword());
-    }
-
-    @Then("ocurre un error con el mensaje {string}")
-    public void ocurreUnErrorConMensaje(String mensajeEsperado) {
-        assertNotNull(exceptionCapturada);
-
-        // Imprime la traza completa de la excepción en consola
-        exceptionCapturada.printStackTrace();
-
-        // Extrae la causa más interna para obtener el mensaje real
-        Throwable causa = exceptionCapturada;
-        while (causa.getCause() != null) {
-            causa = causa.getCause();
-        }
-
-        String mensajeReal = causa.getMessage();
-        System.out.println("⚠️ Mensaje real de la excepción: " + mensajeReal);
-
-        // Validación flexible con contains
-        assertTrue(mensajeReal.contains(mensajeEsperado));
-    }
-
-
-    // ---------- EDICIÓN DE USUARIO ----------
 
     @Given("existe un usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol {string}")
     public void existeUnUsuario(String nombre, String apellido, String email, String password, String rolNombre) {
-        RolNombre rolNom = RolNombre.valueOf(rolNombre.toUpperCase());
-        Rol rol = rolRepository.findByRolNombre(rolNom)
-                .orElseThrow(() -> new RuntimeException("Rol no encontrado: " + rolNom));
+        Rol rol = buscarRolPorNombre(rolNombre);
+        usuarioExistente = usuarioRepository.findByEmail(email).orElseGet(() ->
+                usuarioRepository.save(crearUsuario(nombre, apellido, email, password, rol, EstadoUsuario.ACTIVO))
+        );
+    }
 
-        if (usuarioRepository.findByEmail(email).isEmpty()) {
-            Usuario usuario = new Usuario();
-            usuario.setNombre(nombre);
-            usuario.setApellido(apellido);
-            usuario.setEmail(email);
-            usuario.setPassword(password);
-            usuario.setRol(rol);
-            usuario.setEstado(EstadoUsuario.ACTIVO);
-            usuarioExistente = usuarioRepository.save(usuario);
-        } else {
-            usuarioExistente = usuarioRepository.findByEmail(email).get();
-        }
+    @Given("existe un usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol ID {long}")
+    public void existeUnUsuarioConRolId(String nombre, String apellido, String email, String password, Long rolId) {
+        Rol rol = rolRepository.findById(rolId).orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: " + rolId));
+        usuarioExistente = usuarioRepository.findByEmail(email).orElseGet(() ->
+                usuarioRepository.save(crearUsuario(nombre, apellido, email, password, rol, EstadoUsuario.ACTIVO))
+        );
     }
 
     @When("actualizo el usuario con email {string} a nombre {string}, apellido {string}, email {string}, password {string} y rol {string}")
     public void actualizoElUsuario(String emailAntiguo, String nuevoNombre, String nuevoApellido, String nuevoEmail, String nuevaPassword, String rolNombre) {
         try {
-            Long idUsuario = usuarioRepository.findByEmail(emailAntiguo)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado")).getId();
-
-            Rol rol = rolRepository.findAll().stream()
-                    .filter(r -> r.getRolNombre().name().equals(rolNombre.toUpperCase()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-
-            UsuarioRequest request = new UsuarioRequest(
-                    nuevoNombre,
-                    nuevoApellido,
-                    asegurarEmailUnico(nuevoEmail),
-                    nuevaPassword,
-                    rol.getId()
-            );
-
-            usuarioService.actualizarUsuario(idUsuario, request);
+            Long idUsuario = obtenerIdPorEmail(emailAntiguo);
+            Rol rol = buscarRolPorNombre(rolNombre);
+            usuarioService.actualizarUsuario(idUsuario, new UsuarioRequest(
+                    nuevoNombre, nuevoApellido, asegurarEmailUnico(nuevoEmail), nuevaPassword, rol.getId()));
         } catch (Exception e) {
             exceptionCapturada = e;
         }
     }
-
-    @When("intento actualizar el usuario con email {string} a nombre {string}, apellido {string}, email {string}, password {string} y rol {string}")
-    public void intentoActualizarUsuarioConEmailDuplicado(String emailAntiguo, String nuevoNombre, String nuevoApellido, String nuevoEmail, String nuevaPassword, String rolNombre) {
-        try {
-            // NO usar asegurarEmailUnico aquí porque queremos que falle por email duplicado
-            Long idUsuario = usuarioRepository.findByEmail(emailAntiguo)
-                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado")).getId();
-
-            Rol rol = rolRepository.findAll().stream()
-                    .filter(r -> r.getRolNombre().name().equals(rolNombre.toUpperCase()))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-
-            UsuarioRequest request = new UsuarioRequest(
-                    nuevoNombre,
-                    nuevoApellido,
-                    nuevoEmail, // Email sin modificar para probar duplicado
-                    nuevaPassword,
-                    rol.getId()
-            );
-
-            usuarioService.actualizarUsuario(idUsuario, request);
-        } catch (Exception e) {
-            exceptionCapturada = e;
-        }
-    }
-
-    @Then("el usuario con email {string} tiene nombre {string}")
-    public void elUsuarioTieneNombre(String email, String nombreEsperado) {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado tras actualización"));
-        assertEquals(nombreEsperado, usuario.getNombre());
-        assertEquals(EstadoUsuario.ACTIVO, usuario.getEstado());
-    }
-
-    // ---------- ELIMINACIÓN DE USUARIO ----------
 
     @When("elimino el usuario con email {string}")
     public void eliminoElUsuario(String email) {
         usuarioRepository.findByEmail(email)
-                .ifPresentOrElse(
-                        u -> usuarioService.eliminarUsuario(u.getId()),
-                        () -> exceptionCapturada = new RuntimeException("Usuario no encontrado")
-                );
+                .ifPresentOrElse(u -> usuarioService.eliminarUsuario(u.getId()),
+                        () -> exceptionCapturada = new RuntimeException("Usuario no encontrado"));
     }
 
     @When("intento eliminar el usuario con email {string}")
@@ -228,18 +129,125 @@ public class UsuarioSteps {
         }
     }
 
+    @When("bloqueo el usuario con email {string}")
+    public void bloqueoElUsuarioConEmail(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado para bloqueo"));
+        usuarioService.cambiarEstado(usuario.getId(), EstadoUsuario.BLOQUEADO);
+    }
+
+    @Then("el usuario con email {string} aparece en la lista de usuarios")
+    public void elUsuarioApareceEnLaLista(String email) {
+        Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow();
+        assertEquals(email, usuario.getEmail());
+        assertEquals(EstadoUsuario.ACTIVO, usuario.getEstado());
+        assertNotEquals("password123", usuario.getPassword());
+    }
+
+    @Then("el usuario con email {string} tiene nombre {string}")
+    public void elUsuarioTieneNombre(String email, String nombreEsperado) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado tras actualización"));
+        assertEquals(nombreEsperado, usuario.getNombre());
+    }
+
+    @Then("el usuario con email {string} tiene rol {string}")
+    public void elUsuarioConEmailTieneRol(String email, String rolEsperado) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado al verificar rol"));
+        assertEquals(rolEsperado.toUpperCase(), usuario.getRol().getRolNombre().name());
+    }
+
+    @Then("el usuario con email {string} tiene estado {string}")
+    public void elUsuarioConEmailTieneEstado(String email, String estadoEsperado) {
+        Usuario usuario = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado al verificar estado"));
+        assertEquals(EstadoUsuario.valueOf(estadoEsperado.toUpperCase()), usuario.getEstado());
+    }
+
     @Then("el usuario con email {string} ya no existe en la base de datos")
     public void elUsuarioYaNoExiste(String email) {
         assertFalse(usuarioRepository.findByEmail(email).isPresent());
     }
 
-    // ---------- UTILIDAD ----------
+    @Then("ocurre un error con el mensaje {string}")
+    public void ocurreUnErrorConMensaje(String mensajeEsperado) {
+        assertNotNull(exceptionCapturada);
+        Throwable causa = exceptionCapturada;
+        while (causa.getCause() != null) causa = causa.getCause();
+        assertTrue(causa.getMessage().contains(mensajeEsperado));
+    }
 
     private String asegurarEmailUnico(String email) {
-        if (usuarioRepository.existsByEmail(email)) {
-            String nuevoEmail = email.replace("@", "+" + UUID.randomUUID().toString().substring(0, 8) + "@");
-            return nuevoEmail;
-        }
-        return email;
+        return usuarioRepository.existsByEmail(email)
+                ? email.replace("@", "+" + UUID.randomUUID().toString().substring(0, 8) + "@")
+                : email;
     }
+
+    private Rol buscarRolPorNombre(String rolNombre) {
+        return rolRepository.findAll().stream()
+                .filter(r -> r.getRolNombre().name().equals(rolNombre.toUpperCase()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado para pruebas"));
+    }
+
+    private Long obtenerIdPorEmail(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"))
+                .getId();
+    }
+
+    private Usuario crearUsuario(String nombre, String apellido, String email, String password, Rol rol, EstadoUsuario estado) {
+        Usuario usuario = new Usuario();
+        usuario.setNombre(nombre);
+        usuario.setApellido(apellido);
+        usuario.setEmail(email);
+        usuario.setPassword(password);
+        usuario.setRol(rol);
+        usuario.setEstado(estado);
+        return usuario;
+    }
+
+    @Given("existe un usuario con ID {long} y email {string}")
+    public void existeUnUsuarioConIdYEmail(Long id, String email) {
+        Rol rol = rolRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Rol no encontrado con ID: 1"));
+
+        Usuario usuario = new Usuario();
+        usuario.setId(id);
+        usuario.setNombre("Nombre" + id);
+        usuario.setApellido("Apellido" + id);
+        usuario.setEmail(email);
+        usuario.setPassword("password123");
+        usuario.setRol(rol);
+        usuario.setEstado(EstadoUsuario.ACTIVO);
+
+        usuarioExistente = usuarioRepository.save(usuario);
+    }
+
+    @Given("existe otro usuario con ID {long} y email {string}")
+    public void existeOtroUsuarioConIdYEmail(Long id, String email) {
+        existeUnUsuarioConIdYEmail(id, email);
+    }
+
+    @When("intento actualizar el usuario con ID {long} a email {string}")
+    public void intentoActualizarUsuarioConIdAEmail(Long id, String nuevoEmail) {
+        try {
+            Usuario usuario = usuarioRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id: " + id));
+
+            UsuarioRequest request = new UsuarioRequest(
+                    usuario.getNombre(),
+                    usuario.getApellido(),
+                    nuevoEmail,
+                    "newPassword123",
+                    usuario.getRol().getId()
+            );
+
+            usuarioService.actualizarUsuario(id, request);
+        } catch (Exception e) {
+            exceptionCapturada = e;
+        }
+    }
+
 }

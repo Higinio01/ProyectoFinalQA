@@ -21,6 +21,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.modelmapper:modelmapper:3.2.3'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.2.0'
+    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
+    implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
+
 
     // JWT - Dependencias correctas para Spring Boot 3.x
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'

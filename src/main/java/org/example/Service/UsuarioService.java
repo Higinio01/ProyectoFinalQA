@@ -56,6 +56,13 @@ public class UsuarioService {
     }
 
     public UsuarioDto crearUsuario(UsuarioRequest usuarioRequest) {
+        if (usuarioRequest.nombre() == null || usuarioRequest.nombre().trim().isEmpty() ||
+                usuarioRequest.apellido() == null || usuarioRequest.apellido().trim().isEmpty() ||
+                usuarioRequest.email() == null || usuarioRequest.email().trim().isEmpty() ||
+                usuarioRequest.password() == null || usuarioRequest.password().trim().isEmpty() ||
+                usuarioRequest.idRol() == null) {
+            throw new UsuarioException.DatosInvalidos("Todos los campos son obligatorios");
+        }
         if (usuarioRepository.existsByEmail(usuarioRequest.email())) {
             throw new UsuarioException.EmailDuplicado("El correo electrónico ya está en uso: " + usuarioRequest.email());
         }
