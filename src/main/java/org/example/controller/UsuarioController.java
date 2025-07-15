@@ -2,10 +2,14 @@ package org.example.controller;
 
 import org.example.Dtos.UsuarioDto;
 import org.example.Entity.EstadoUsuario;
+import org.example.Entity.Usuario;
 import org.example.Request.UsuarioRequest;
 import org.example.Service.UsuarioService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -16,10 +20,12 @@ import java.util.List;
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
     private final UsuarioService usuarioService;
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public UsuarioController(UsuarioService usuarioService) {
+    public UsuarioController(UsuarioService usuarioService, ModelMapper modelMapper) {
         this.usuarioService = usuarioService;
+        this.modelMapper = modelMapper;
     }
 
     // Obtener todos los usuarios
@@ -28,26 +34,30 @@ public class UsuarioController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        return ResponseEntity.ok(usuarioService.obtenerUsuariosPaginados(page, size));
+        Page<Usuario> usuariosPage = usuarioService.obtenerUsuariosPaginados(page, size);
+        return ResponseEntity.ok(usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class)));
     }
-
 
     // Obtener un usuario por ID
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioDto> obtenerPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(usuarioService.usuarioPorId(id));
+        Usuario usuario = usuarioService.usuarioPorId(id);
+        return ResponseEntity.ok(modelMapper.map(usuario, UsuarioDto.class));
     }
 
     // Crear un nuevo usuario
     @PostMapping
     public ResponseEntity<UsuarioDto> crearUsuario(@RequestBody UsuarioRequest usuarioRequest) {
-        return ResponseEntity.ok(usuarioService.crearUsuario(usuarioRequest));
+        Usuario savedUsuario = usuarioService.crearUsuario(usuarioRequest);
+        return ResponseEntity.ok(modelMapper.map(savedUsuario, UsuarioDto.class));
     }
 
     // Actualizar un usuario existente
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDto> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioRequest usuarioRequest) {
-        return ResponseEntity.ok(usuarioService.actualizarUsuario(id, usuarioRequest));
+        Usuario usuario = usuarioService.actualizarUsuario(id, usuarioRequest);
+        UsuarioDto usuarioDto = modelMapper.map(usuario, UsuarioDto.class);
+        return ResponseEntity.ok(usuarioDto);
     }
 
     @PutMapping("/{id}/estado/{nuevoEstado}")

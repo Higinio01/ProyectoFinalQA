@@ -35,7 +35,6 @@ public class AutenticacionController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // El email fue extraído del token y usado para autenticación
         String email = authentication.getName();
 
         return usuarioRepository.findByEmail(email)

@@ -2,15 +2,13 @@ package org.example.stepdefinitions;
 
 import io.cucumber.java.en.*;
 import org.example.Dtos.UsuarioDto;
-import org.example.Entity.EstadoUsuario;
-import org.example.Entity.Rol;
-import org.example.Entity.RolNombre;
-import org.example.Entity.Usuario;
+import org.example.Entity.*;
 import org.example.Repository.RolRepository;
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.example.Service.UsuarioService;
 import org.junit.Before;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -25,13 +23,15 @@ public class UsuarioSteps {
     private final UsuarioService usuarioService;
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
+    private final ModelMapper modelMapper;
 
     public UsuarioSteps(UsuarioService usuarioService,
                         UsuarioRepository usuarioRepository,
-                        RolRepository rolRepository) {
+                        RolRepository rolRepository, ModelMapper modelMapper) {
         this.usuarioService = usuarioService;
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
+        this.modelMapper = modelMapper;
     }
 
     private EstadoUsuario estado;
@@ -65,7 +65,9 @@ public class UsuarioSteps {
         try {
             Rol rol = buscarRolPorNombre(rolNombre);
             String emailFinal = asegurarEmailUnico(email);
-            usuarioCreado = usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, emailFinal, password, rol.getId()));
+            Usuario savedUsuario= usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, emailFinal, password, rol.getId()));
+            usuarioCreado = modelMapper.map(savedUsuario, UsuarioDto.class);
+
         } catch (Exception e) {
             exceptionCapturada = e;
         }
@@ -80,7 +82,8 @@ public class UsuarioSteps {
     public void intentoCrearUsuario(String nombre, String apellido, String email, String password, String rolNombre) {
         try {
             Rol rol = buscarRolPorNombre(rolNombre);
-            usuarioCreado = usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, email, password, rol.getId()));
+            Usuario savedUsuario= usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, email, password, rol.getId()));
+            usuarioCreado = modelMapper.map(savedUsuario, UsuarioDto.class);
         } catch (Exception e) {
             exceptionCapturada = e;
         }
@@ -89,7 +92,8 @@ public class UsuarioSteps {
     @When("intento crear un usuario con nombre {string}, apellido {string}, email {string}, password {string} y rol ID {long}")
     public void intentoCrearUsuarioConRolId(String nombre, String apellido, String email, String password, Long rolId) {
         try {
-            usuarioCreado = usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, email, password, rolId));
+            Usuario savedUsuario= usuarioService.crearUsuario(new UsuarioRequest(nombre, apellido, email, password, rolId));
+            usuarioCreado = modelMapper.map(savedUsuario, UsuarioDto.class);
         } catch (Exception e) {
             exceptionCapturada = e;
         }

@@ -24,20 +24,19 @@ public class ProductoService {
         this.modelMapper = modelMapper;
     }
 
-    public ProductoDto productoPorId(Long id) {
-        var producto = productoRepository.findById(id)
+    public Producto productoPorId(Long id) {
+        return productoRepository.findById(id)
                 .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
-        return modelMapper.map(producto, ProductoDto.class);
     }
 
-    public List<ProductoDto> obtenerTodosLosProductos() {
-        List<Producto> productos = productoRepository.findAll();
-        return productos.stream()
-                .map(producto -> modelMapper.map(producto, ProductoDto.class))
-                .toList();
+    public List<Producto> obtenerTodosLosProductos() {
+        return productoRepository.findAll();
+//        return productos.stream()
+//                .map(producto -> modelMapper.map(producto, ProductoDto.class))
+//                .toList();
     }
 
-    public ProductoDto crearProducto(ProductoRequest request) {
+    public Producto crearProducto(ProductoRequest request) {
         validarPrecioYCantidad((double) request.precio(), request.cantidad());
 
         var producto = new Producto();
@@ -54,11 +53,10 @@ public class ProductoService {
         producto.setPrecio(request.precio());
         producto.setCantidad(request.cantidad());
 
-        var productoGuardado = productoRepository.save(producto);
-        return modelMapper.map(productoGuardado, ProductoDto.class);
+        return productoRepository.save(producto);
     }
 
-    public ProductoDto actualizarProducto(Long id, ProductoRequest request) {
+    public Producto actualizarProducto(Long id, ProductoRequest request) {
         var productoExistente = productoRepository.findById(id)
                 .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
 
@@ -77,8 +75,7 @@ public class ProductoService {
         productoExistente.setPrecio(request.precio());
         productoExistente.setCantidad(request.cantidad());
 
-        var productoActualizado = productoRepository.save(productoExistente);
-        return modelMapper.map(productoActualizado, ProductoDto.class);
+        return productoRepository.save(productoExistente);
     }
 
     public void eliminarProducto(Long id) {
@@ -101,11 +98,11 @@ public class ProductoService {
         }
     }
 
-    public Page<ProductoDto> obtenerProductosPaginados(int page, int size) {
+    public Page<Producto> obtenerProductosPaginados(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Producto> productosPage = productoRepository.findAll(pageable);
 
-        return productosPage.map(producto -> modelMapper.map(producto, ProductoDto.class));
+        //productosPage.map(producto -> modelMapper.map(producto, ProductoDto.class));
+        return productoRepository.findAll(pageable);
     }
 
 }

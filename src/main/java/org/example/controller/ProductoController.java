@@ -5,6 +5,7 @@ import org.example.Entity.Categoria;
 import org.example.Entity.Producto;
 import org.example.Request.ProductoRequest;
 import org.example.Service.ProductoService;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -20,15 +21,18 @@ import java.util.stream.Collectors;
 public class ProductoController {
 
     private final ProductoService productoService;
+    private final ModelMapper modelMapper;
 
-    public ProductoController(ProductoService productoService) {
+    public ProductoController(ProductoService productoService, ModelMapper modelMapper) {
         this.productoService = productoService;
+        this.modelMapper = modelMapper;
     }
 
     @PostMapping
     public ResponseEntity<ProductoDto> crearProducto(@RequestBody ProductoRequest request) {
-        ProductoDto creado = productoService.crearProducto(request);
-        return ResponseEntity.ok(creado);
+        Producto producto = productoService.crearProducto(request);
+        ProductoDto productoDto = modelMapper.map(producto, ProductoDto.class);
+        return ResponseEntity.ok(productoDto);
     }
 
     @GetMapping
@@ -36,20 +40,23 @@ public class ProductoController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<ProductoDto> productos = productoService.obtenerProductosPaginados(page, size);
-        return ResponseEntity.ok(productos);
+        Page<Producto> productos = productoService.obtenerProductosPaginados(page, size);
+        productos.map(producto -> modelMapper.map(producto, ProductoDto.class));
+        return ResponseEntity.ok(productos.map(producto -> modelMapper.map(producto, ProductoDto.class)));
     }
-
-
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductoDto> obtenerProducto(@PathVariable Long id) {
-        return ResponseEntity.ok(productoService.productoPorId(id));
+        Producto producto = productoService.productoPorId(id);
+        ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductoDto> actualizarProducto(@PathVariable Long id, @RequestBody ProductoRequest request) {
-        return ResponseEntity.ok(productoService.actualizarProducto(id, request));
+        Producto producto = productoService.actualizarProducto(id, request);
+        ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
+        return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{id}")
