@@ -5,6 +5,7 @@ import org.example.Entity.Categoria;
 import org.example.Entity.Producto;
 import org.example.Request.ProductoRequest;
 import org.example.Request.StockUpdateRequest;
+import org.example.Service.InventarioService;
 import org.example.Service.ProductoService;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -22,10 +23,12 @@ import java.util.stream.Collectors;
 public class ProductoController {
 
     private final ProductoService productoService;
+    private final InventarioService inventarioService;
     private final ModelMapper modelMapper;
 
-    public ProductoController(ProductoService productoService, ModelMapper modelMapper) {
+    public ProductoController(ProductoService productoService, InventarioService inventarioService, ModelMapper modelMapper) {
         this.productoService = productoService;
+        this.inventarioService = inventarioService;
         this.modelMapper = modelMapper;
     }
 
@@ -90,14 +93,18 @@ public class ProductoController {
         return ResponseEntity.ok(categorias);
     }
 
+    /**
+     * Actualizar stock - delega al InventarioService
+     */
     @PatchMapping("/{id}/stock")
     public ResponseEntity<ProductoDto> actualizarStock(
             @PathVariable Long id,
             @RequestBody StockUpdateRequest request) {
 
-        Producto producto = productoService.actualizarStock(id, request);
+        // Delegar al InventarioService que maneja stock Y movimientos
+        Producto producto = inventarioService.actualizarStock(id, request);
+
         ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
         return ResponseEntity.ok(dto);
     }
-
 }

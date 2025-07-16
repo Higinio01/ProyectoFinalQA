@@ -3,7 +3,8 @@ package org.example.Request;
 public record StockUpdateRequest(
         Integer cantidad,
         String tipoMovimiento,
-        String motivo
+        String motivo,
+        String usuarioResponsable
 ) {
     public StockUpdateRequest {
         if (cantidad == null || cantidad == 0) {
