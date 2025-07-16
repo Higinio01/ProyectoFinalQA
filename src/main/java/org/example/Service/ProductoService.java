@@ -6,6 +6,7 @@ import org.example.Entity.Producto;
 import org.example.Exception.ProductoException;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
+import org.example.Request.StockUpdateRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,6 +77,43 @@ public class ProductoService {
         productoExistente.setCantidad(request.cantidad());
 
         return productoRepository.save(productoExistente);
+    }
+
+    public Producto actualizarStock(Long id, StockUpdateRequest request) {
+        var producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
+
+        int cantidadActual = producto.getCantidad();
+        int nuevaCantidad;
+
+        if (request.tipoMovimiento().equalsIgnoreCase("ENTRADA")) {
+            // Entrada: sumar al stock
+            nuevaCantidad = cantidadActual + Math.abs(request.cantidad());
+        } else {
+            // Salida: restar del stock
+            int cantidadSalida = Math.abs(request.cantidad());
+
+            if (cantidadActual < cantidadSalida) {
+                throw new ProductoException.ValorInvalido(
+                        String.format("Stock insuficiente. Stock actual: %d, cantidad solicitada: %d",
+                                cantidadActual, cantidadSalida)
+                );
+            }
+
+            nuevaCantidad = cantidadActual - cantidadSalida;
+        }
+
+        producto.setCantidad(nuevaCantidad);
+
+        System.out.printf("Movimiento de stock - Producto: %s, Tipo: %s, Cantidad: %d, Stock anterior: %d, Stock nuevo: %d, Motivo: %s%n",
+                producto.getNombre(),
+                request.tipoMovimiento(),
+                request.cantidad(),
+                cantidadActual,
+                nuevaCantidad,
+                request.motivo() != null ? request.motivo() : "No especificado");
+
+        return productoRepository.save(producto);
     }
 
     public void eliminarProducto(Long id) {

@@ -4,6 +4,7 @@ import org.example.Dtos.ProductoDto;
 import org.example.Entity.Categoria;
 import org.example.Entity.Producto;
 import org.example.Request.ProductoRequest;
+import org.example.Request.StockUpdateRequest;
 import org.example.Service.ProductoService;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -41,7 +42,6 @@ public class ProductoController {
             @RequestParam(defaultValue = "10") int size) {
 
         Page<Producto> productos = productoService.obtenerProductosPaginados(page, size);
-        productos.map(producto -> modelMapper.map(producto, ProductoDto.class));
         return ResponseEntity.ok(productos.map(producto -> modelMapper.map(producto, ProductoDto.class)));
     }
 
@@ -88,6 +88,16 @@ public class ProductoController {
                 .map(Enum::name)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(categorias);
+    }
+
+    @PatchMapping("/{id}/stock")
+    public ResponseEntity<ProductoDto> actualizarStock(
+            @PathVariable Long id,
+            @RequestBody StockUpdateRequest request) {
+
+        Producto producto = productoService.actualizarStock(id, request);
+        ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
+        return ResponseEntity.ok(dto);
     }
 
 }
