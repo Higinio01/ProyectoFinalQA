@@ -9,10 +9,10 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @RunWith(Cucumber.class)
 @CucumberOptions(
-        features = "src/test/resources/features",
-        glue = "org.example.stepdefinitions",
-        plugin = {"pretty", "html:build/reports/cucumber-report.html"},
-        monochrome = true
+    features = "src/test/resources/features",
+    glue = "org.example.stepdefinitions",
+    plugin = {"pretty", "html:build/reports/cucumber-report.html"},
+    monochrome = true
 )
 @ActiveProfiles("test")
 public class CucumberTest {

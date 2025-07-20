@@ -28,9 +28,6 @@ public class InventarioController {
         this.modelMapper = modelMapper;
     }
 
-    /**
-     * Actualizar stock de un producto
-     */
     @PatchMapping("/productos/{productoId}/stock")
     public ResponseEntity<ProductoDto> actualizarStock(
             @PathVariable Long productoId,
@@ -42,9 +39,6 @@ public class InventarioController {
         return ResponseEntity.ok(dto);
     }
 
-    /**
-     * Obtener historial completo de movimientos con paginación
-     */
     @GetMapping("/historial")
     public ResponseEntity<Page<MovimientoInventarioDto>> obtenerHistorialDeMovimientos(
             @RequestParam(defaultValue = "0") int page,
@@ -54,9 +48,6 @@ public class InventarioController {
         return ResponseEntity.ok(historial.map(movimiento -> modelMapper.map(movimiento, MovimientoInventarioDto.class)));
     }
 
-    /**
-     * Obtener historial de movimientos de un producto específico
-     */
     @GetMapping("/historial/producto/{productoId}")
     public ResponseEntity<List<MovimientoInventarioDto>> obtenerHistorialPorProducto(@PathVariable Long productoId) {
         List<MovimientoInventario> historial = inventarioService.obtenerHistorialPorProducto(productoId);
@@ -64,27 +55,6 @@ public class InventarioController {
 
     }
 
-    /**
-     * Obtener movimientos con filtros múltiples
-     */
-//    @GetMapping("/historial/filtros")
-//    public ResponseEntity<Page<MovimientoInventarioDto>> obtenerMovimientosConFiltros(
-//            @RequestParam(required = false) Long productoId,
-//            @RequestParam(required = false) String tipoMovimiento,
-//            @RequestParam(required = false) String usuarioResponsable,
-//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaInicio,
-//            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaFin,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "20") int size
-//    ) {
-//        Page<MovimientoInventario> movimientos = inventarioService.obtenerMovimientosConFiltros(
-//                productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, page, size);
-//        return ResponseEntity.ok(movimientos.map(movimiento -> modelMapper.map(movimiento, MovimientoInventarioDto.class)));
-//    }
-
-    /**
-     * Obtener movimientos por tipo (ENTRADA o SALIDA)
-     */
     @GetMapping("/historial/tipo/{tipoMovimiento}")
     public ResponseEntity<List<MovimientoInventarioDto>> obtenerMovimientosPorTipo(
             @PathVariable String tipoMovimiento
@@ -94,9 +64,6 @@ public class InventarioController {
         return ResponseEntity.ok(movimientos.stream().map(movimiento -> modelMapper.map(movimiento, MovimientoInventarioDto.class)).toList());
     }
 
-    /**
-     * Obtener movimientos por usuario responsable
-     */
     @GetMapping("/historial/usuario/{usuarioResponsable}")
     public ResponseEntity<List<MovimientoInventarioDto>> obtenerMovimientosPorUsuario(
             @PathVariable String usuarioResponsable
