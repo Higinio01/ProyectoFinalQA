@@ -43,8 +43,8 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build & Run tests
-        run: ./gradlew clean build
+      - name: Build & Run tests with test profile
+        run: ./gradlew clean build -Dspring.profiles.active=test
 
       - name: Run Flyway migrations
         run: ./gradlew flywayMigrate
