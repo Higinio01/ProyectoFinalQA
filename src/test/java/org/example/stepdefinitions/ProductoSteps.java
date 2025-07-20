@@ -7,6 +7,7 @@ import org.example.Entity.Producto;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Service.ProductoService;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Component;
@@ -20,12 +21,14 @@ import static org.junit.Assert.*;
 public class ProductoSteps {
 
 
-    private ProductoRepository productoRepository;
-    private ProductoService productoService;
+    private final ProductoRepository productoRepository;
+    private final ProductoService productoService;
+    private final ModelMapper modelMapper;
 
-    public ProductoSteps(ProductoRepository productoRepository, ProductoService productoService) {
+    public ProductoSteps(ProductoRepository productoRepository, ProductoService productoService, ModelMapper modelMapper) {
         this.productoRepository = productoRepository;
         this.productoService = productoService;
+        this.modelMapper = modelMapper;
     }
 
     private ProductoDto productoCreado;
@@ -43,7 +46,8 @@ public class ProductoSteps {
         try {
             ProductoRequest request = new ProductoRequest(nombre, descripcion, categoriaString, (float) precio, cantidad);
             // Asignar el resultado para evitar NPE
-            productoCreado = productoService.crearProducto(request);
+            Producto producto = productoService.crearProducto(request);
+            productoCreado = modelMapper.map(producto, ProductoDto.class);
         } catch (Exception e) {
             excepcionCapturada = e;
         }
@@ -52,7 +56,8 @@ public class ProductoSteps {
     @When("solicito el producto por su ID")
     public void solicitoElProductoPorSuID() {
         try {
-            productoObtenido = productoService.productoPorId(productoExistente.getId());
+            Producto producto = productoService.productoPorId(productoExistente.getId());
+            productoObtenido = modelMapper.map(producto, ProductoDto.class);
         } catch (Exception e) {
             excepcionCapturada = e;
         }
@@ -165,7 +170,8 @@ public class ProductoSteps {
     @When("solicito el producto con ID {long}")
     public void solicitoElProductoConID(Long id) {
         try {
-            productoObtenido = productoService.productoPorId(id);
+            Producto producto = productoService.productoPorId(id);
+            productoObtenido = modelMapper.map(producto, ProductoDto.class);
         } catch (Exception e) {
             excepcionCapturada = e;
         }

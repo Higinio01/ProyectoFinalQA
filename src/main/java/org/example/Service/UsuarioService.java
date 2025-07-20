@@ -42,20 +42,19 @@ public class UsuarioService {
         this.modelMapper = modelMapper;
     }
 
-    public UsuarioDto usuarioPorId(Long id) {
-        var usuario = usuarioRepository.findById(id)
+    public Usuario usuarioPorId(Long id) {
+        return usuarioRepository.findById(id)
                 .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
-        return modelMapper.map(usuario, UsuarioDto.class);
     }
 
-    public List<UsuarioDto> obtenerTodosLosUsuarios() {
-        List<Usuario> usuarios = usuarioRepository.findAll();
-        return usuarios.stream()
-                .map(usuario -> modelMapper.map(usuario, UsuarioDto.class))
-                .toList();
+    public List<Usuario> obtenerTodosLosUsuarios() {
+        return usuarioRepository.findAll();
+//        return usuarios.stream()
+//                .map(usuario -> modelMapper.map(usuario, UsuarioDto.class))
+//                .toList();
     }
 
-    public UsuarioDto crearUsuario(UsuarioRequest usuarioRequest) {
+    public Usuario crearUsuario(UsuarioRequest usuarioRequest) {
         if (usuarioRequest.nombre() == null || usuarioRequest.nombre().trim().isEmpty() ||
                 usuarioRequest.apellido() == null || usuarioRequest.apellido().trim().isEmpty() ||
                 usuarioRequest.email() == null || usuarioRequest.email().trim().isEmpty() ||
@@ -86,10 +85,10 @@ public class UsuarioService {
         ApiToken apiToken = new ApiToken(savedUsuario, jwt);
         apiTokenRepository.save(apiToken);
 
-        return modelMapper.map(savedUsuario, UsuarioDto.class);
+        return savedUsuario;
     }
 
-    public UsuarioDto actualizarUsuario(Long id, UsuarioRequest usuarioRequest) {
+    public Usuario actualizarUsuario(Long id, UsuarioRequest usuarioRequest) {
         Usuario usuarioExistente = usuarioRepository.findById(id)
                 .orElseThrow(() -> new UsuarioException.NoEncontrado("Usuario no encontrado con id: " + id));
 
@@ -109,8 +108,7 @@ public class UsuarioService {
             usuarioExistente.setPassword(passwordEncoder.encode(usuarioRequest.password()));
         }
 
-        Usuario usuarioActualizado = usuarioRepository.save(usuarioExistente);
-        return modelMapper.map(usuarioActualizado, UsuarioDto.class);
+        return usuarioRepository.save(usuarioExistente);
     }
 
     @Transactional
@@ -130,10 +128,11 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
     }
 
-    public Page<UsuarioDto> obtenerUsuariosPaginados(int page, int size) {
+    public Page<Usuario> obtenerUsuariosPaginados(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
         Page<Usuario> usuariosPage = usuarioRepository.findAll(pageable);
-        return usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class));
+        //usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class));
+        return usuariosPage;
     }
 
 }

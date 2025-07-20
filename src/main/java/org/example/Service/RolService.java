@@ -1,6 +1,7 @@
 package org.example.Service;
 
 import org.example.Dtos.RolDto;
+import org.example.Entity.Rol;
 import org.example.Repository.RolRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +15,7 @@ public class RolService {
         this.rolRepository = rolRepository;
     }
 
-    public List<RolDto> listarRoles() {
-        return rolRepository.findAll().stream()
-                .map(rol -> new RolDto(rol.getId(), rol.getRolNombre().name()))
-                .toList();
+    public List<Rol> listarRoles() {
+        return rolRepository.findAll();
     }
 }
