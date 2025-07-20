@@ -5,7 +5,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Map;
 
 @Component
 public class TokenValidationCache {
@@ -36,5 +35,4 @@ public class TokenValidationCache {
         tokenCache.invalidate(token);
         return existed;
     }
-
 }

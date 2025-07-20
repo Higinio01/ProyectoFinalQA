@@ -43,13 +43,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login").permitAll()
                         .requestMatchers("/api/debug/cache").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").hasAnyAuthority("ADMIN", "EMPLEADO", "CLIENTE")
                         .requestMatchers("/api/productos").hasAnyAuthority("ADMIN", "EMPLEADO")
+                        .requestMatchers(HttpMethod.DELETE, "/api/productos/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/usuarios").hasAnyAuthority("ADMIN", "EMPLEADO")
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/*/estado/*").hasAuthority("ADMIN")
                         .requestMatchers("/api/usuarios/**").hasAnyAuthority("ADMIN", "EMPLEADO")
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/*/estado/*").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/inventario").hasAnyAuthority("ADMIN", "EMPLEADO")
-                        .requestMatchers("/api/auth/me").authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -59,13 +63,12 @@ public class SecurityConfig {
                         .logoutUrl("/api/auth/logout")
                         .addLogoutHandler((request, response, authentication) -> {
                             final var authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-                            invalidateTokenInCache(authHeader); // ✅ Llamada correcta ahora
+                            invalidateTokenInCache(authHeader);
                         })
                         .logoutSuccessHandler((request, response, authentication) -> {
                             SecurityContextHolder.clearContext();
                         })
                 );
-
 
         return http.build();
     }
