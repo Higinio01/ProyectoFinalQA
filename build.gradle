@@ -1,17 +1,19 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.postgresql:postgresql:42.7.3'
+        classpath 'org.flywaydb:flyway-database-postgresql:11.10.3'
+    }
+}
+
 plugins {
     id 'java'
     id 'io.spring.dependency-management' version '1.1.4'
     id 'org.springframework.boot' version '3.3.0'
     id 'org.owasp.dependencycheck' version '10.0.3'
-    id 'org.flywaydb.flyway' version '10.10.0'
-}
-
-flyway {
-    url = System.getenv('SPRING_DATASOURCE_URL') ?: 'jdbc:postgresql://localhost:5432/inventario_db'
-    user = System.getenv('SPRING_DATASOURCE_USERNAME') ?: 'postgres'
-    password = System.getenv('SPRING_DATASOURCE_PASSWORD') ?: 'admin'
-    locations = ['classpath:db/migration']
-    baselineOnMigrate = true
+    id 'org.flywaydb.flyway' version '11.10.3'
 }
 
 group = 'org.example'
@@ -25,17 +27,29 @@ repositories {
     mavenCentral()
 }
 
+flyway {
+    driver = 'org.postgresql.Driver'
+    url = System.getenv('SPRING_DATASOURCE_URL') ?: 'jdbc:postgresql://localhost:5432/inventario_db'
+    user = System.getenv('SPRING_DATASOURCE_USERNAME') ?: 'postgres'
+    password = System.getenv('SPRING_DATASOURCE_PASSWORD') ?: 'admin'
+    locations = ['classpath:db/migration']
+    baselineOnMigrate = true
+    createSchemas = true
+    connectRetries = 3
+}
+
 dependencies {
+    // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Utilities
     implementation 'org.modelmapper:modelmapper:3.2.3'
     implementation 'com.github.ben-manes.caffeine:caffeine:3.2.0'
-    implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
-    implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
 
-
-    // JWT - Dependencias correctas para Spring Boot 3.x
+    // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
@@ -44,47 +58,31 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // PostgreSQL
-    runtimeOnly 'org.postgresql:postgresql'
-
-    // Flyway
-    implementation 'org.flywaydb:flyway-core'
-    implementation 'org.flywaydb:flyway-database-postgresql'
+    // Database
+    implementation 'org.flywaydb:flyway-core:11.10.3'
+    implementation 'org.flywaydb:flyway-database-postgresql:11.10.3'
+    implementation 'org.postgresql:postgresql:42.7.3'
 
     // Testing
-    testImplementation platform('org.junit:junit-bom:5.13.1')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.cucumber:cucumber-java:7.23.0'
     testImplementation 'io.cucumber:cucumber-spring:7.23.0'
-    testImplementation 'io.cucumber:cucumber-junit:7.23.0'
-
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.23.0'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
-    testImplementation 'org.postgresql:postgresql'
+    testImplementation 'io.cucumber:cucumber-junit:7.23.0'
 
-    runtimeOnly 'org.owasp:dependency-check-gradle:10.0.3'
 }
 
 test {
-    useJUnit()
+    useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
+        exceptionFormat "full"
     }
 
     if (project.hasProperty("profile")) {
         systemProperty "spring.profiles.active", project.getProperty("profile")
     }
-}
-
-
-dependencyCheck {
-    formats = ['HTML', 'JSON', 'XML']
-    failBuildOnCVSS = 11.0
-    suppressionFile = null
-    scanConfigurations = ['runtimeClasspath']
-    autoUpdate = false
-
-
 }

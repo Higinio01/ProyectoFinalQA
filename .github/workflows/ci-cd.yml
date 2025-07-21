@@ -43,11 +43,18 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Build & Run tests with test profile
-        run: ./gradlew clean build -Dspring.profiles.active=test
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
 
       - name: Run Flyway migrations
         run: ./gradlew flywayMigrate
+
+      - name: Build & Run tests
+        run: ./gradlew clean build test
 
   docker-build:
     runs-on: ubuntu-latest
@@ -57,4 +64,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t proyectofinalqa:latest .
+        run: docker build -t spring_inventario:latest .

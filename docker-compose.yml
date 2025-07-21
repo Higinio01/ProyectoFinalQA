@@ -4,6 +4,7 @@ services:
   db:
     image: postgres:17-alpine
     container_name: postgres_inventario
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
