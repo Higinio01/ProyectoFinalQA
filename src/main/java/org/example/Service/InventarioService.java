@@ -27,38 +27,18 @@ public class InventarioService {
         this.productoRepository = productoRepository;
     }
 
-    /**
-     * Actualiza el stock del producto y registra el movimiento
-     */
     @Transactional
     public Producto actualizarStock(Long productoId, StockUpdateRequest request) {
 
-        // Buscar el producto
         Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + productoId));
 
         int cantidadAnterior = producto.getCantidad();
-        int nuevaCantidad;
+        int nuevaCantidad = getNuevaCantidad(request, cantidadAnterior);
 
-        // Calcular nueva cantidad
-        if (request.tipoMovimiento().equalsIgnoreCase("ENTRADA")) {
-            nuevaCantidad = cantidadAnterior + request.cantidad();
-        } else {
-            // Validar stock suficiente para salida
-            if (cantidadAnterior < request.cantidad()) {
-                throw new ProductoException.ValorInvalido(
-                        String.format("Stock insuficiente. Stock actual: %d, cantidad solicitada: %d",
-                                cantidadAnterior, request.cantidad())
-                );
-            }
-            nuevaCantidad = cantidadAnterior - request.cantidad();
-        }
-
-        // Actualizar el producto
         producto.setCantidad(nuevaCantidad);
         Producto productoActualizado = productoRepository.save(producto);
 
-        // Registrar el movimiento
         MovimientoInventario movimiento = new MovimientoInventario(
                 producto,
                 request.cantidad(),
@@ -74,24 +54,32 @@ public class InventarioService {
         return productoActualizado;
     }
 
-    /**
-     * Obtiene el historial completo de movimientos con paginación
-     */
+    private static int getNuevaCantidad(StockUpdateRequest request, int cantidadAnterior) {
+        int nuevaCantidad;
+
+        if (request.tipoMovimiento().equalsIgnoreCase("ENTRADA")) {
+            nuevaCantidad = cantidadAnterior + request.cantidad();
+        } else {
+            if (cantidadAnterior < request.cantidad()) {
+                throw new ProductoException.ValorInvalido(
+                        String.format("Stock insuficiente. Stock actual: %d, cantidad solicitada: %d",
+                                cantidadAnterior, request.cantidad())
+                );
+            }
+            nuevaCantidad = cantidadAnterior - request.cantidad();
+        }
+        return nuevaCantidad;
+    }
+
     public Page<MovimientoInventario> obtenerHistorialDeMovimientos(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return movimientoInventarioRepository.findAllByOrderByFechaMovimientoDesc(pageable);
     }
 
-    /**
-     * Obtiene el historial de movimientos de un producto específico
-     */
     public List<MovimientoInventario> obtenerHistorialPorProducto(Long productoId) {
         return movimientoInventarioRepository.findByProductoIdOrderByFechaMovimientoDesc(productoId);
     }
 
-    /**
-     * Obtiene movimientos con filtros múltiples
-     */
     public Page<MovimientoInventario> obtenerMovimientosConFiltros(
             Long productoId, String tipoMovimiento, String usuarioResponsable,
             LocalDateTime fechaInicio, LocalDateTime fechaFin, int page, int size) {
@@ -101,16 +89,10 @@ public class InventarioService {
                 productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, pageable);
     }
 
-    /**
-     * Obtiene movimientos por tipo (ENTRADA o SALIDA)
-     */
     public List<MovimientoInventario> obtenerMovimientosPorTipo(String tipoMovimiento) {
         return movimientoInventarioRepository.findByTipoMovimientoOrderByFechaMovimientoDesc(tipoMovimiento.toUpperCase());
     }
 
-    /**
-     * Obtiene movimientos por usuario responsable
-     */
     public List<MovimientoInventario> obtenerMovimientosPorUsuario(String usuarioResponsable) {
         return movimientoInventarioRepository.findByUsuarioResponsableOrderByFechaMovimientoDesc(usuarioResponsable);
     }

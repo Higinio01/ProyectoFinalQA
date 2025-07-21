@@ -1,7 +1,6 @@
 package org.example.Service;
 
 import jakarta.transaction.Transactional;
-import org.example.Dtos.UsuarioDto;
 import org.example.Entity.ApiToken;
 import org.example.Entity.EstadoUsuario;
 import org.example.Entity.Rol;
@@ -12,7 +11,6 @@ import org.example.Repository.RolRepository;
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.example.Security.jwt.JwtService;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,17 +27,15 @@ public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ModelMapper modelMapper;
 
     public UsuarioService(ApiTokenRepository apiTokenRepository, JwtService jwtService,
                           UsuarioRepository usuarioRepository, RolRepository rolRepository,
-                          PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
+                          PasswordEncoder passwordEncoder) {
         this.apiTokenRepository = apiTokenRepository;
         this.jwtService = jwtService;
         this.usuarioRepository = usuarioRepository;
         this.rolRepository = rolRepository;
         this.passwordEncoder = passwordEncoder;
-        this.modelMapper = modelMapper;
     }
 
     public Usuario usuarioPorId(Long id) {
@@ -49,9 +45,6 @@ public class UsuarioService {
 
     public List<Usuario> obtenerTodosLosUsuarios() {
         return usuarioRepository.findAll();
-//        return usuarios.stream()
-//                .map(usuario -> modelMapper.map(usuario, UsuarioDto.class))
-//                .toList();
     }
 
     public Usuario crearUsuario(UsuarioRequest usuarioRequest) {
@@ -130,9 +123,6 @@ public class UsuarioService {
 
     public Page<Usuario> obtenerUsuariosPaginados(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
-        Page<Usuario> usuariosPage = usuarioRepository.findAll(pageable);
-        //usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class));
-        return usuariosPage;
+        return usuarioRepository.findAll(pageable);
     }
-
 }

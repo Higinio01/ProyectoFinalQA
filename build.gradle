@@ -63,8 +63,12 @@ dependencies {
     implementation 'org.flywaydb:flyway-database-postgresql:11.10.3'
     implementation 'org.postgresql:postgresql:42.7.3'
 
-    // Testing
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // ✅ Testing
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'junit', module: 'junit'
+    }
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.10.0'
     testImplementation 'io.cucumber:cucumber-java:7.23.0'
     testImplementation 'io.cucumber:cucumber-spring:7.23.0'
     testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.23.0'
@@ -73,13 +77,14 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'io.cucumber:cucumber-junit:7.23.0'
 
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 test {
     useJUnitPlatform()
     testLogging {
         events "passed", "skipped", "failed"
-        exceptionFormat "full"
+        exceptionFormat = "full"
     }
 
     if (project.hasProperty("profile")) {

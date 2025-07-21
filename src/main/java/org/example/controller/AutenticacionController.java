@@ -4,7 +4,6 @@ import org.example.Repository.UsuarioRepository;
 import org.example.Request.LoginRequest;
 import org.example.Security.jwt.TokenResponse;
 import org.example.Service.AutenticacionService;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

@@ -8,13 +8,8 @@ import org.example.Service.UsuarioService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -28,7 +23,6 @@ public class UsuarioController {
         this.modelMapper = modelMapper;
     }
 
-    // Obtener todos los usuarios
     @GetMapping
     public ResponseEntity<Page<UsuarioDto>> obtenerTodos(
             @RequestParam(defaultValue = "0") int page,
@@ -38,21 +32,18 @@ public class UsuarioController {
         return ResponseEntity.ok(usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class)));
     }
 
-    // Obtener un usuario por ID
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioDto> obtenerPorId(@PathVariable Long id) {
         Usuario usuario = usuarioService.usuarioPorId(id);
         return ResponseEntity.ok(modelMapper.map(usuario, UsuarioDto.class));
     }
 
-    // Crear un nuevo usuario
     @PostMapping
     public ResponseEntity<UsuarioDto> crearUsuario(@RequestBody UsuarioRequest usuarioRequest) {
         Usuario savedUsuario = usuarioService.crearUsuario(usuarioRequest);
         return ResponseEntity.ok(modelMapper.map(savedUsuario, UsuarioDto.class));
     }
 
-    // Actualizar un usuario existente
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDto> actualizarUsuario(@PathVariable Long id, @RequestBody UsuarioRequest usuarioRequest) {
         Usuario usuario = usuarioService.actualizarUsuario(id, usuarioRequest);
@@ -74,7 +65,6 @@ public class UsuarioController {
         }
     }
 
-    // Eliminar un usuario
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) {
         usuarioService.eliminarUsuario(id);
