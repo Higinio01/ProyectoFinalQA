@@ -33,9 +33,9 @@ flyway {
     user = project.findProperty('flywayUser') ?: 'postgres'
     password = project.findProperty('flywayPassword') ?: 'admin'
     locations = ['classpath:db/migration']
-    baselineOnMigrate = true
-    createSchemas = true
-    connectRetries = 3
+//    baselineOnMigrate = true
+//    createSchemas = true
+//    connectRetries = 3
 }
 
 dependencies {

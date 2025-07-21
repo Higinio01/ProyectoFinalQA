@@ -51,7 +51,7 @@ jobs:
           done
 
       - name: Run Flyway migrations
-        run: ./gradlew flywayMigrate
+        run: ./gradlew clean build flywayMigrate
 
       - name: Build & Run tests
         run: ./gradlew clean build test
