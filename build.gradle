@@ -29,9 +29,9 @@ repositories {
 
 flyway {
     driver = 'org.postgresql.Driver'
-    url = System.getenv('SPRING_DATASOURCE_URL') ?: 'jdbc:postgresql://localhost:5432/inventario_db'
-    user = System.getenv('SPRING_DATASOURCE_USERNAME') ?: 'postgres'
-    password = System.getenv('SPRING_DATASOURCE_PASSWORD') ?: 'admin'
+    url = project.findProperty('flywayUrl') ?: 'jdbc:postgresql://localhost:5432/inventario_db'
+    user = project.findProperty('flywayUser') ?: 'postgres'
+    password = project.findProperty('flywayPassword') ?: 'admin'
     locations = ['classpath:db/migration']
     baselineOnMigrate = true
     createSchemas = true
@@ -63,7 +63,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-database-postgresql:11.10.3'
     implementation 'org.postgresql:postgresql:42.7.3'
 
-    // ✅ Testing
+    // Testing
     testImplementation('org.springframework.boot:spring-boot-starter-test') {
         exclude group: 'junit', module: 'junit'
     }
@@ -76,7 +76,6 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'io.cucumber:cucumber-junit:7.23.0'
-
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -86,7 +85,6 @@ test {
         events "passed", "skipped", "failed"
         exceptionFormat = "full"
     }
-
     if (project.hasProperty("profile")) {
         systemProperty "spring.profiles.active", project.getProperty("profile")
     }
