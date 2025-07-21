@@ -8,18 +8,12 @@ import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Service.ProductoService;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.stereotype.Component;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
 
 import static org.junit.Assert.*;
 
-
 public class ProductoSteps {
-
 
     private final ProductoRepository productoRepository;
     private final ProductoService productoService;
