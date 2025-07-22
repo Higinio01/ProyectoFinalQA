@@ -32,7 +32,6 @@ jobs:
       SPRING_DATASOURCE_PASSWORD: admin
       APPLICATION_SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,16 +74,80 @@ jobs:
       - name: Iniciar servicios con Docker Compose
         run: |
           docker compose -f docker-compose.yml up -d
-          echo "Esperando a que la app esté disponible..."
 
-          # Reemplazamos la verificación de /actuator/health por el login
+      - name: Verificar estado de contenedores
+        run: |
+          echo "=== Estado de contenedores ==="
+          docker compose ps
+          echo ""
+          echo "=== Logs de la base de datos ==="
+          docker compose logs db
+          echo ""
+          echo "=== Logs de la aplicación ==="
+          docker compose logs app
+
+      - name: Esperar y verificar conectividad
+        run: |
+          echo "Esperando a que la app esté disponible..."
+          
+          # Verificar que la BD esté lista
+          echo "Verificando PostgreSQL..."
           for i in {1..30}; do
-            RESPONSE=$(curl -s -w "%{http_code}" -o /dev/null -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"email": "admin@example.com", "password": "admin"}')
-            if [ "$RESPONSE" -eq 200 ]; then
-              echo "Login exitoso ✅"
+            if docker compose exec -T db pg_isready -U postgres; then
+              echo "PostgreSQL está listo ✅"
               break
             fi
-            echo "Esperando login... Intento $i de 30"
+            echo "Esperando PostgreSQL... Intento $i de 30"
+            sleep 5
+          done
+          
+          # Dar tiempo adicional para que la app se conecte a la BD
+          echo "Dando tiempo para que la app se conecte a la BD..."
+          sleep 30
+          
+          # Verificar logs de la aplicación nuevamente
+          echo "=== Logs recientes de la aplicación ==="
+          docker compose logs --tail=50 app
+          
+          # Intentar conectarse a la aplicación
+          for i in {1..60}; do
+            echo "Intento $i de 60 - Verificando aplicación..."
+          
+            # Primero verificar que el contenedor esté corriendo
+            if ! docker compose ps app | grep -q "Up"; then
+              echo "❌ El contenedor de la aplicación no está corriendo"
+              docker compose logs app
+              exit 1
+            fi
+          
+            # Verificar conectividad básica al puerto
+            if nc -z localhost 8080; then
+              echo "Puerto 8080 está abierto ✅"
+          
+              # Intentar el endpoint de login
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/api/auth/login \
+                -H "Content-Type: application/json" \
+                -d '{"email": "admin@example.com", "password": "admin"}' || echo "000")
+          
+              echo "Código de respuesta del login: $HTTP_CODE"
+          
+              if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "400" ] || [ "$HTTP_CODE" = "401" ]; then
+                echo "Aplicación está respondiendo ✅"
+                break
+              fi
+            else
+              echo "Puerto 8080 no está disponible"
+            fi
+          
+            if [ $i -eq 60 ]; then
+              echo "❌ La aplicación no respondió después de 10 minutos"
+              echo "=== Logs finales de la aplicación ==="
+              docker compose logs app
+              echo "=== Estado final de contenedores ==="
+              docker compose ps
+              exit 1
+            fi
+          
             sleep 10
           done
 
@@ -99,9 +162,23 @@ jobs:
 
       - name: Guardar reporte como artefacto
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: reporte-jmeter
           path: jmeter/reporte-html
+
+      - name: Guardar logs como artefacto (en caso de fallo)
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: docker-logs
+          path: |
+            docker-compose-logs.txt
+
+      - name: Crear archivo de logs para artefacto
+        if: failure()
+        run: |
+          docker compose logs > docker-compose-logs.txt
 
       - name: Apagar contenedores
         if: always()
