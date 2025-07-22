@@ -82,9 +82,10 @@ jobs:
 
       - name: Ejecutar prueba de estrés
         run: |
+          mkdir -p jmeter/reporte-html
           apache-jmeter-5.6.3/bin/jmeter \
             -n \
-            -t jmeter/Inventario_testplan.jmx.jmx \
+            -t jmeter/Inventario_testplan.jmx \
             -l jmeter/resultados.jtl \
             -e -o jmeter/reporte-html
 
