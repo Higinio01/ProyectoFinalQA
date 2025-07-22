@@ -26,6 +26,7 @@ class ProductoServiceTest {
     @BeforeEach
     void setUp() {
         productoRepository = mock(ProductoRepository.class);
+        movimientoInventarioRepository = mock(MovimientoInventarioRepository.class);
         productoService = new ProductoService(productoRepository, movimientoInventarioRepository);
     }
 
@@ -124,8 +125,10 @@ class ProductoServiceTest {
 
         productoService.eliminarProducto(1L);
 
-        verify(productoRepository).delete(producto);
+        verify(movimientoInventarioRepository).deleteByProductoId(1L); // ✅ nueva verificación
+        verify(productoRepository).delete(producto); // ya estaba
     }
+
 
     @Test
     void productoPorId_existente_devuelveProducto() {
