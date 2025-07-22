@@ -76,7 +76,7 @@ jobs:
         run: |
           docker compose -f docker-compose.yml up -d
           echo "Esperando a que la app esté disponible..."
-          
+
           # Reemplazamos la verificación de /actuator/health por el login
           for i in {1..30}; do
             RESPONSE=$(curl -s -w "%{http_code}" -o /dev/null -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"email": "admin@example.com", "password": "admin"}')
@@ -84,8 +84,8 @@ jobs:
               echo "Login exitoso ✅"
               break
             fi
-            echo "Esperando a que la aplicación esté disponible..."
-            sleep 5
+            echo "Esperando login... Intento $i de 30"
+            sleep 10
           done
 
       - name: Ejecutar prueba de estrés con JMeter
