@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:17-alpine
-    container_name: inventario_db
+    container_name: inventario-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: inventario_db
@@ -19,7 +19,7 @@ services:
 
   db_test:
     image: postgres:17-alpine
-    container_name: inventario_db_test
+    container_name: inventario-db-test
     restart: unless-stopped
     environment:
       POSTGRES_DB: inventario_db_test
@@ -37,7 +37,7 @@ services:
 
   app:
     image: higinio01/proyectofinalqa-app:latest
-    container_name: spring_inventario
+    container_name: spring-inventario
     ports:
       - "8080:8080"
     depends_on:
@@ -53,6 +53,7 @@ services:
       SPRING_FLYWAY_ENABLED: "true"
       APPLICATION_SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     restart: unless-stopped
+    command: [ "./wait-for-it.sh", "db:5432", "java", "-jar", "/app/app.jar" ]
 
 volumes:
   inventario-data:

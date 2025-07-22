@@ -76,12 +76,15 @@ jobs:
         run: |
           docker compose -f docker-compose.yml up -d
           echo "Esperando a que la app esté disponible..."
-          for i in {1..20}; do
-            if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
-              echo "App está arriba ✅"
+          
+          # Reemplazamos la verificación de /actuator/health por el login
+          for i in {1..30}; do
+            RESPONSE=$(curl -s -w "%{http_code}" -o /dev/null -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d '{"email": "admin@example.com", "password": "admin"}')
+            if [ "$RESPONSE" -eq 200 ]; then
+              echo "Login exitoso ✅"
               break
             fi
-            echo "Esperando app..."
+            echo "Esperando a que la aplicación esté disponible..."
             sleep 5
           done
 
