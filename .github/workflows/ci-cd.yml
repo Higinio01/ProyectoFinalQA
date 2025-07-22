@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 env:
   REGISTRY: ghcr.io
@@ -83,45 +83,91 @@ jobs:
           name: jar-artifact
           path: build/libs/*.jar
 
-  stress-test:
+  docker-build-push:
     runs-on: ubuntu-latest
     needs: build-and-test
-    timeout-minutes: 25
+    timeout-minutes: 15
     if: github.event_name == 'push'
-
-    outputs:
-      version: ${{ needs.build-and-test.outputs.version }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: jar-artifact
+          path: build/libs/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-test.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  stress-test:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, docker-build-push]
+    timeout-minutes: 25
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: jar-artifact
+          path: build/libs/
+
       - name: Set up Docker Compose
         run: |
           sudo apt-get update
-          sudo apt-get install docker-compose-plugin -y
+          sudo apt-get install docker-compose -y
 
       - name: Create environment file
         run: |
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD || 'admin' }}" > .env
 
-      - name: Build and start services
-        run: docker compose up --build -d
+      - name: Start services
+        run: docker compose up -d
 
       - name: Wait for application
         run: |
+          echo "⏳ Waiting for application to be healthy..."
           for i in {1..40}; do
             health_status=$(docker inspect spring_inventario --format='{{.State.Health.Status}}' 2>/dev/null || echo "starting")
             echo "Health status: $health_status"
+
             if [ "$health_status" = "healthy" ]; then
-              echo "✅ App is healthy"
+              echo "✅ Application is healthy"
               break
             fi
+
             if [ $i -eq 40 ]; then
-              echo "❌ App failed to become healthy"
+              echo "❌ Application failed to become healthy after 20 minutes"
               docker compose logs app
+              docker compose logs db
               exit 1
             fi
+
+            echo "⏳ Attempt $i/40: waiting 30 seconds..."
             sleep 30
           done
 
@@ -156,27 +202,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose down -v
-
-  docker-push:
-    runs-on: ubuntu-latest
-    needs: stress-test
-    if: github.event_name == 'push'
-    timeout-minutes: 10
-
-    steps:
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Tag and push image
-        run: |
-          docker tag spring_inventario ghcr.io/${{ github.repository }}:latest
-          docker tag spring_inventario ghcr.io/${{ github.repository }}:${{ needs.stress-test.outputs.version }}
-          docker push ghcr.io/${{ github.repository }}:latest
-          docker push ghcr.io/${{ github.repository }}:${{ needs.stress-test.outputs.version }}
