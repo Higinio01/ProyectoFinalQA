@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
+      db_test:
         image: postgres:17-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: admin
-          POSTGRES_DB: inventario_db
+          POSTGRES_DB: inventario_db_test
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -26,7 +26,7 @@ jobs:
           --health-retries 5
 
     env:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/inventario_db
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/inventario_db_test
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin
 
@@ -43,28 +43,18 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Wait for PostgreSQL
+      - name: Wait for PostgreSQL (db_test)
         run: |
-          until pg_isready -h localhost -p 5432 -U postgres; do
-            echo "Waiting for PostgreSQL..."
+          until pg_isready -h localhost -p 5433 -U postgres; do
+            echo "Esperando a db_test..."
             sleep 2
           done
 
-      - name: Run Flyway migrations
-        run: ./gradlew clean build flywayMigrate
+      - name: Run Flyway migrations (test)
+        run: ./gradlew flywayMigrate -Dspring.profiles.active=test
 
-      - name: Build & Run tests
+      - name: Build & Run unit tests
         run: ./gradlew clean build test
-
-  docker-build:
-    runs-on: ubuntu-latest
-    needs: build-test
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t spring_inventario:latest .
 
   stress-test:
     runs-on: ubuntu-latest
@@ -74,45 +64,39 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Instalar Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install docker-compose -y
-
-      - name: Levantar servicios con docker-compose
-        run: docker-compose up -d
-
-      - name: Esperar que la app esté disponible
-        run: |
-          echo "⏳ Esperando que la aplicación esté disponible en http://localhost:8080..."
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/actuator/health | grep UP; then
-              echo "✅ App activa"
-              break
-            fi
-            echo "⏳ Intento $i: esperando 2 segundos..."
-            sleep 2
-          done
-
       - name: Descargar y configurar JMeter
         run: |
-          wget https://downloads.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz
+          wget https://downloads.apache.org/jmeter/binaries/apache-jmeter-5.6.3.tgz
           tar -xzf apache-jmeter-5.6.3.tgz
+
+      - name: Iniciar servicios con Docker Compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+          echo "Esperando a que la app esté disponible..."
+          for i in {1..20}; do
+            if curl -s http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "App está arriba ✅"
+              break
+            fi
+            echo "Esperando app..."
+            sleep 5
+          done
 
       - name: Ejecutar prueba de estrés con JMeter
         run: |
           mkdir -p jmeter/reporte-html
           apache-jmeter-5.6.3/bin/jmeter \
-            -n -t jmeter/Inventario_testplan.jmx \
+            -n \
+            -t jmeter/Inventario_testplan.jmx \
             -l jmeter/resultados.jtl \
             -e -o jmeter/reporte-html
 
-      - name: Guardar resultados como artefacto
+      - name: Guardar reporte como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: reporte-jmeter
           path: jmeter/reporte-html
 
-      - name: Apagar docker-compose
+      - name: Apagar contenedores
         if: always()
-        run: docker-compose down -v
+        run: docker compose -f docker-compose.yml down
