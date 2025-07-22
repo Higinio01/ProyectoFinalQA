@@ -78,7 +78,24 @@ jobs:
         run: |
           wget https://downloads.apache.org//jmeter/binaries/apache-jmeter-5.6.3.tgz
           tar -xzf apache-jmeter-5.6.3.tgz
-          echo "JMeter instalado correctamente"
+          echo "✅ JMeter instalado correctamente"
+
+      - name: Levantar contenedor de la app
+        run: |
+          docker run -d -p 8080:8080 --name app spring_inventario:latest
+          echo "🚀 Contenedor de la app iniciado"
+
+      - name: Esperar a que la app esté disponible
+        run: |
+          echo "⏳ Esperando que la aplicación esté disponible en http://localhost:8080..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/actuator/health | grep UP; then
+              echo "✅ La aplicación está disponible"
+              break
+            fi
+            echo "⏳ Intento $i: esperando 2 segundos..."
+            sleep 2
+          done
 
       - name: Ejecutar prueba de estrés
         run: |
@@ -94,3 +111,10 @@ jobs:
         with:
           name: reporte-jmeter
           path: jmeter/reporte-html
+
+      - name: Detener contenedor de la app
+        if: always()
+        run: |
+          docker stop app
+          docker rm app
+          echo "🧹 Contenedor detenido y eliminado"
