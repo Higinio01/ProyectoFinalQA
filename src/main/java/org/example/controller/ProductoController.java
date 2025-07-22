@@ -32,13 +32,6 @@ public class ProductoController {
         this.modelMapper = modelMapper;
     }
 
-    @PostMapping
-    public ResponseEntity<ProductoDto> crearProducto(@RequestBody ProductoRequest request) {
-        Producto producto = productoService.crearProducto(request);
-        ProductoDto productoDto = modelMapper.map(producto, ProductoDto.class);
-        return ResponseEntity.ok(productoDto);
-    }
-
     @GetMapping
     public ResponseEntity<Page<ProductoDto>> listarProductos(
             @RequestParam(defaultValue = "0") int page,
@@ -53,19 +46,6 @@ public class ProductoController {
         Producto producto = productoService.productoPorId(id);
         ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
         return ResponseEntity.ok(dto);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<ProductoDto> actualizarProducto(@PathVariable Long id, @RequestBody ProductoRequest request) {
-        Producto producto = productoService.actualizarProducto(id, request);
-        ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
-        return ResponseEntity.ok(dto);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
-        productoService.eliminarProducto(id);
-        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/filtro")
@@ -93,15 +73,31 @@ public class ProductoController {
         return ResponseEntity.ok(categorias);
     }
 
-    /**
-     * Actualizar stock - delega al InventarioService
-     */
+    @PostMapping
+    public ResponseEntity<ProductoDto> crearProducto(@RequestBody ProductoRequest request) {
+        Producto producto = productoService.crearProducto(request);
+        ProductoDto productoDto = modelMapper.map(producto, ProductoDto.class);
+        return ResponseEntity.ok(productoDto);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductoDto> actualizarProducto(@PathVariable Long id, @RequestBody ProductoRequest request) {
+        Producto producto = productoService.actualizarProducto(id, request);
+        ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
+        return ResponseEntity.ok(dto);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarProducto(@PathVariable Long id) {
+        productoService.eliminarProducto(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}/stock")
     public ResponseEntity<ProductoDto> actualizarStock(
             @PathVariable Long id,
             @RequestBody StockUpdateRequest request) {
 
-        // Delegar al InventarioService que maneja stock Y movimientos
         Producto producto = inventarioService.actualizarStock(id, request);
 
         ProductoDto dto = modelMapper.map(producto, ProductoDto.class);

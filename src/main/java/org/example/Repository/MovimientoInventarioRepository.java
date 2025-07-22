@@ -50,4 +50,6 @@ public interface MovimientoInventarioRepository extends JpaRepository<Movimiento
 
     // Obtener últimos movimientos
     Page<MovimientoInventario> findAllByOrderByFechaMovimientoDesc(Pageable pageable);
+
+    void deleteByProductoId(Long id);
 }

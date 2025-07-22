@@ -42,7 +42,7 @@ public class InventarioController {
     @GetMapping("/historial")
     public ResponseEntity<Page<MovimientoInventarioDto>> obtenerHistorialDeMovimientos(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "10") int size
     ) {
         Page<MovimientoInventario> historial = inventarioService.obtenerHistorialDeMovimientos(page, size);
         return ResponseEntity.ok(historial.map(movimiento -> modelMapper.map(movimiento, MovimientoInventarioDto.class)));

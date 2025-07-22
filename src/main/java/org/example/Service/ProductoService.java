@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 import org.example.Entity.Categoria;
 import org.example.Entity.Producto;
 import org.example.Exception.ProductoException;
+import org.example.Repository.MovimientoInventarioRepository;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Request.StockUpdateRequest;
@@ -11,15 +12,18 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class ProductoService {
     private final ProductoRepository productoRepository;
+    private final MovimientoInventarioRepository movimientoInventarioRepository;
 
-    public ProductoService(ProductoRepository productoRepository) {
+    public ProductoService(ProductoRepository productoRepository, MovimientoInventarioRepository movimientoInventarioRepository) {
         this.productoRepository = productoRepository;
+        this.movimientoInventarioRepository = movimientoInventarioRepository;
     }
 
     public Producto productoPorId(Long id) {
@@ -105,10 +109,16 @@ public class ProductoService {
         return nuevaCantidad;
     }
 
+    @Transactional
     public void eliminarProducto(Long id) {
-        var productoExistente = productoRepository.findById(id)
+        Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new ProductoException.NoEncontrado("Producto no encontrado con id: " + id));
-        productoRepository.delete(productoExistente);
+
+        // Eliminar movimientos primero
+        movimientoInventarioRepository.deleteByProductoId(id);
+
+        // Luego eliminar el producto
+        productoRepository.delete(producto);
     }
 
     public Page<Producto> buscarProductos(String nombre, String categoria,

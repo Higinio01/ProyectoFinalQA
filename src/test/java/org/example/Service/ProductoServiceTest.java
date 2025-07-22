@@ -2,6 +2,7 @@ package org.example.Service;
 
 import org.example.Entity.Producto;
 import org.example.Exception.ProductoException;
+import org.example.Repository.MovimientoInventarioRepository;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Request.StockUpdateRequest;
@@ -20,11 +21,12 @@ class ProductoServiceTest {
 
     private ProductoService productoService;
     private ProductoRepository productoRepository;
+    private MovimientoInventarioRepository movimientoInventarioRepository;
 
     @BeforeEach
     void setUp() {
         productoRepository = mock(ProductoRepository.class);
-        productoService = new ProductoService(productoRepository);
+        productoService = new ProductoService(productoRepository, movimientoInventarioRepository);
     }
 
     @Test
