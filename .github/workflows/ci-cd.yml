@@ -26,9 +26,12 @@ jobs:
           --health-retries 5
 
     env:
+      SPRING_PROFILES_ACTIVE: test
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/inventario_db_test
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: admin
+      APPLICATION_SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
 
     steps:
       - name: Checkout code
@@ -51,7 +54,7 @@ jobs:
           done
 
       - name: Run Flyway migrations (test)
-        run: ./gradlew flywayMigrate -Dspring.profiles.active=test
+        run: ./gradlew flywayMigrate -PflywayUrl=jdbc:postgresql://localhost:5433/inventario_db_test -PflywayUser=postgres -PflywayPassword=admin
 
       - name: Build & Run unit tests
         run: ./gradlew clean build test
