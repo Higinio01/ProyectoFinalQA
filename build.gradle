@@ -80,6 +80,8 @@ dependencies {
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'io.cucumber:cucumber-junit:7.23.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.junit.platform:junit-platform-suite-api:1.10.0'
+    testImplementation 'org.junit.platform:junit-platform-suite-engine:1.10.0'
 }
 
 test {
