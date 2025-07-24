@@ -31,10 +31,21 @@ jobs:
 
     env:
       SPRING_PROFILES_ACTIVE: test
-      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/inventario_db_test
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin
-      APPLICATION_SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: inventario_db_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+
+      SERVER_PORT: 0
+
+      API_BASE_URL: http://localhost:8080
+      API_VERSION: v1
+      API_CONTEXT_PATH: /api
+
+      JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      JPA_SHOW_SQL: "false"
 
     steps:
       - name: Checkout code
@@ -51,13 +62,13 @@ jobs:
 
       - name: Wait for PostgreSQL (db_test)
         run: |
-          until pg_isready -h localhost -p 5433 -U postgres; do
+          until pg_isready -h localhost -p 5432 -U postgres; do  # ← CORREGIDO: Puerto actualizado
             echo "Esperando a db_test..."
             sleep 2
           done
 
       - name: Run Flyway migrations (test)
-        run: ./gradlew flywayMigrate -PflywayUrl=jdbc:postgresql://localhost:5433/inventario_db_test -PflywayUser=postgres -PflywayPassword=admin
+        run: ./gradlew flywayMigrate -PflywayUrl=jdbc:postgresql://localhost:5432/inventario_db_test -PflywayUser=postgres -PflywayPassword=admin  # ← CORREGIDO
 
       - name: Build application
         run: ./gradlew clean build -x test
@@ -102,6 +113,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-test
 
+    env:
+      API_BASE_URL: http://localhost:8080
+      SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: prod
+      JPA_SHOW_SQL: "false"
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v4
@@ -113,7 +130,12 @@ jobs:
 
       - name: Iniciar servicios con Docker Compose
         run: |
+          # Usar variables de entorno para configuración dinámica
           docker compose -f docker-compose.yml up -d
+        env:
+          API_BASE_URL: http://localhost:8080
+          SERVER_PORT: 8080
+          SPRING_PROFILES_ACTIVE: prod
 
       - name: Verificar estado de contenedores
         run: |
@@ -149,9 +171,12 @@ jobs:
           echo "=== Logs recientes de la aplicación ==="
           docker compose logs --tail=50 app
           
-          # Intentar conectarse a la aplicación
+          # Intentar conectarse a la aplicación usando URL dinámica
+          APP_URL="${API_BASE_URL:-http://localhost:8080}"
+          API_CONTEXT="${API_CONTEXT_PATH:-/api}"
+          
           for i in {1..60}; do
-            echo "Intento $i de 60 - Verificando aplicación..."
+            echo "Intento $i de 60 - Verificando aplicación en $APP_URL$API_CONTEXT..."
           
             # Primero verificar que el contenedor esté corriendo
             if ! docker compose ps app | grep -q "Up"; then
@@ -164,8 +189,8 @@ jobs:
             if nc -z localhost 8080; then
               echo "Puerto 8080 está abierto"
           
-              # Intentar el endpoint de login
-              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/api/auth/login \
+              # Intentar el endpoint de login usando URLs dinámicas
+              HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST $APP_URL$API_CONTEXT/auth/login \
                 -H "Content-Type: application/json" \
                 -d '{"email": "admin@example.com", "password": "admin"}' || echo "000")
           
@@ -190,6 +215,9 @@ jobs:
           
             sleep 10
           done
+        env:
+          API_BASE_URL: http://localhost:8080
+          API_CONTEXT_PATH: /api
 
       - name: Ejecutar prueba de estrés con JMeter
         run: |
@@ -210,6 +238,11 @@ jobs:
             jmeter/resultados.jtl
           retention-days: 30
 
+      - name: Crear archivo de logs para artefacto
+        if: failure()
+        run: |
+          docker compose logs > docker-compose-logs.txt
+
       - name: Guardar logs como artefacto (en caso de fallo)
         uses: actions/upload-artifact@v4
         if: failure()
@@ -217,11 +250,6 @@ jobs:
           name: docker-logs
           path: |
             docker-compose-logs.txt
-
-      - name: Crear archivo de logs para artefacto
-        if: failure()
-        run: |
-          docker compose logs > docker-compose-logs.txt
 
       - name: Apagar contenedores
         if: always()
@@ -236,4 +264,6 @@ jobs:
           pr_title: "Auto PR: Merge dev to main"
           pr_body: |
             All tests passed successfully!
+            Performance tests completed
+            Ready for production deployment
           github_token: ${{ secrets.PERSONAL_TOKEN }}
