@@ -202,27 +202,6 @@ jobs:
             -l jmeter/resultados.jtl \
             -e -o jmeter/reporte-html
 
-      - name: Generar resumen de pruebas de estrés
-        run: |
-          echo "## Resumen de Pruebas de Estrés (JMeter)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ -f "jmeter/resultados.jtl" ]; then
-            # Análisis básico del archivo JTL
-            TOTAL_REQUESTS=$(tail -n +2 jmeter/resultados.jtl | wc -l)
-            FAILED_REQUESTS=$(tail -n +2 jmeter/resultados.jtl | awk -F',' '$8 == "false" {count++} END {print count+0}')
-            SUCCESS_REQUESTS=$((TOTAL_REQUESTS - FAILED_REQUESTS))
-            SUCCESS_RATE=$(echo "scale=2; $SUCCESS_REQUESTS * 100 / $TOTAL_REQUESTS" | bc -l 2>/dev/null || echo "N/A")
-          
-            echo "###Estadísticas Generales" >> $GITHUB_STEP_SUMMARY
-            echo "-Total de peticiones: $TOTAL_REQUESTS" >> $GITHUB_STEP_SUMMARY
-            echo "-Exitosas: $SUCCESS_REQUESTS" >> $GITHUB_STEP_SUMMARY
-            echo "-Fallidas: $FAILED_REQUESTS" >> $GITHUB_STEP_SUMMARY
-            echo "-Tasa de éxito: ${SUCCESS_RATE}%" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Reporte HTML detallado disponible en los artefactos**" >> $GITHUB_STEP_SUMMARY
-          fi
-
       - name: Guardar reporte JMeter como artefacto
         uses: actions/upload-artifact@v4
         if: always()
