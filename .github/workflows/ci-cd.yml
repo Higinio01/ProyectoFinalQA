@@ -64,7 +64,7 @@ jobs:
         run: ./gradlew clean build test
 
       - name: Run acceptance tests (Cucumber)
-        run: /gradlew test --tests "*CucumberTest*" --exclude-test "*RegressionTestSuite*"
+        run: ./gradlew test --tests "*CucumberTest*" --exclude-test "*RegressionTestSuite*"
         continue-on-error: true
 
       - name: Generate test summary
