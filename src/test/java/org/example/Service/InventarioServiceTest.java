@@ -7,6 +7,7 @@ import org.example.Repository.MovimientoInventarioRepository;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.StockUpdateRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +19,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class InventarioServiceTest {
+public class InventarioServiceTest {
 
     private InventarioService inventarioService;
     private MovimientoInventarioRepository movimientoRepo;
@@ -32,6 +33,7 @@ class InventarioServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void actualizarStock_entrada_exitoso() {
         Producto producto = new Producto();
         producto.setId(1L);
@@ -49,6 +51,7 @@ class InventarioServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void actualizarStock_salida_exitoso() {
         Producto producto = new Producto();
         producto.setId(1L);

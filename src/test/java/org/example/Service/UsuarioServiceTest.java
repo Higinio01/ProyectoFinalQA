@@ -8,6 +8,7 @@ import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.example.Security.jwt.JwtService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Pageable;
 
@@ -40,6 +41,7 @@ public class UsuarioServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void crearUsuario_exitoso() {
         UsuarioRequest request = new UsuarioRequest("Juan", "Pérez", "juan@example.com", "123456", 1L);
         Rol rol = new Rol();
@@ -111,6 +113,7 @@ public class UsuarioServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void actualizarUsuario_exitoso_actualizaDatosCorrectamente() {
         Long userId = 1L;
         Rol rol = new Rol();
@@ -156,6 +159,7 @@ public class UsuarioServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void eliminarUsuario_existente_eliminaCorrectamente() {
         Usuario usuario = new Usuario();
         usuario.setId(1L);
