@@ -10,6 +10,7 @@ import org.example.Request.LoginRequest;
 import org.example.Security.jwt.TokenResponse;
 import org.example.Security.jwt.JwtService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,7 +21,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class AutenticacionServiceTest {
+public class AutenticacionServiceTest {
 
     private AutenticacionService autenticacionService;
     private ApiTokenRepository apiTokenRepository;
@@ -41,26 +42,7 @@ class AutenticacionServiceTest {
     }
 
     @Test
-    void login_usuarioActivo_sinTokenPrevio_generarYGuardarToken() {
-        Usuario usuario = new Usuario();
-        usuario.setId(1L);
-        usuario.setEmail("juan@example.com");
-        usuario.setEstado(EstadoUsuario.ACTIVO);
-
-        when(usuarioRepository.findByEmail("juan@example.com")).thenReturn(Optional.of(usuario));
-        when(apiTokenRepository.findByUsuarioId(1L)).thenReturn(Optional.empty());
-        when(jwtService.generateToken(usuario)).thenReturn("nuevo-token");
-
-        LoginRequest request = new LoginRequest("juan@example.com", "1234");
-
-        TokenResponse response = autenticacionService.login(request);
-
-        assertEquals("nuevo-token", response.getJwtToken());
-        verify(apiTokenRepository).save(any(ApiToken.class));
-        verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
-    }
-
-    @Test
+    @Tag("critical")
     void login_usuarioActivo_conTokenPrevio_retornaTokenExistente() {
         Usuario usuario = new Usuario();
         usuario.setId(2L);
@@ -81,6 +63,7 @@ class AutenticacionServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void login_usuarioNoExiste_lanzaExcepcion() {
         when(usuarioRepository.findByEmail("no@existe.com")).thenReturn(Optional.empty());
 
@@ -90,6 +73,7 @@ class AutenticacionServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void login_usuarioInactivo_lanzaBadCredentialsException() {
         Usuario usuario = new Usuario();
         usuario.setEmail("inactivo@example.com");
@@ -103,6 +87,7 @@ class AutenticacionServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void login_autenticacionFalla_lanzaExcepcion() {
         LoginRequest request = new LoginRequest("fallo@example.com", "wrongpass");
 

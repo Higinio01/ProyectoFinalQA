@@ -2,7 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main" ]
 
@@ -69,7 +69,7 @@ jobs:
 
       - name: Generate test summary
         run: |
-          echo "## 📊 Resumen de Pruebas" >> $GITHUB_STEP_SUMMARY
+          echo "## Resumen de Pruebas" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           # Contar pruebas JUnit
@@ -79,34 +79,24 @@ jobs:
             JUNIT_ERRORS=$(find build/test-results/test -name "*.xml" -exec grep -h "errors=" {} \; | sed 's/.*errors="\([0-9]*\)".*/\1/' | awk '{sum += $1} END {print sum}')
             JUNIT_SUCCESS=$((JUNIT_TOTAL - JUNIT_FAILURES - JUNIT_ERRORS))
           
-            echo "### 🧪 Pruebas Unitarias (JUnit)" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Exitosas: ${JUNIT_SUCCESS:-0}" >> $GITHUB_STEP_SUMMARY
-            echo "- ❌ Fallidas: ${JUNIT_FAILURES:-0}" >> $GITHUB_STEP_SUMMARY
-            echo "- ⚠️ Errores: ${JUNIT_ERRORS:-0}" >> $GITHUB_STEP_SUMMARY
-            echo "- 📈 Total: ${JUNIT_TOTAL:-0}" >> $GITHUB_STEP_SUMMARY
+            echo "### Pruebas Unitarias (JUnit)" >> $GITHUB_STEP_SUMMARY
+            echo "- Exitosas: ${JUNIT_SUCCESS:-0}" >> $GITHUB_STEP_SUMMARY
+            echo "- Fallidas: ${JUNIT_FAILURES:-0}" >> $GITHUB_STEP_SUMMARY
+            echo "- Errores: ${JUNIT_ERRORS:-0}" >> $GITHUB_STEP_SUMMARY
+            echo "- Total: ${JUNIT_TOTAL:-0}" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
           
           # Verificar si existen reportes de Cucumber
           if [ -f "build/reports/cucumber-report.html" ]; then
-            echo "### 🥒 Pruebas de Aceptación (Cucumber)" >> $GITHUB_STEP_SUMMARY
-            echo "- 📋 Reporte generado exitosamente" >> $GITHUB_STEP_SUMMARY
+            echo "### Pruebas de Aceptación (Cucumber)" >> $GITHUB_STEP_SUMMARY
+            echo "-Reporte generado exitosamente" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           else
-            echo "### 🥒 Pruebas de Aceptación (Cucumber)" >> $GITHUB_STEP_SUMMARY
-            echo "- ⚠️ No se encontraron reportes de Cucumber" >> $GITHUB_STEP_SUMMARY
+            echo "### Pruebas de Aceptación (Cucumber)" >> $GITHUB_STEP_SUMMARY
+            echo "-No se encontraron reportes de Cucumber" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-
-      # Comentado: Requiere permisos especiales
-      # - name: Publish Test Results
-      #   uses: dorny/test-reporter@v1
-      #   if: always()
-      #   with:
-      #     name: 'Resultados de Pruebas JUnit'
-      #     path: 'build/test-results/test/*.xml'
-      #     reporter: java-junit
-      #     fail-on-error: false
 
       - name: Guardar reportes JUnit como artefacto
         uses: actions/upload-artifact@v4
@@ -136,6 +126,42 @@ jobs:
           path: |
             build/reports/
             *.log
+
+      - name: Run Regression Tests
+        run: ./gradlew test --tests RegressionTestSuite
+
+      - name: Generate regression test summary
+        run: |
+          echo "### Pruebas de Regresión" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -d "build/test-results/test" ]; then
+            # Buscar específicamente los resultados de RegressionTestSuite
+            REGRESSION_XML=$(find build/test-results/test -name "*RegressionTestSuite*.xml" | head -1)
+          
+            if [ -f "$REGRESSION_XML" ]; then
+              REGRESSION_TOTAL=$(grep -o 'tests="[0-9]*"' "$REGRESSION_XML" | grep -o '[0-9]*')
+              REGRESSION_FAILURES=$(grep -o 'failures="[0-9]*"' "$REGRESSION_XML" | grep -o '[0-9]*')
+              REGRESSION_ERRORS=$(grep -o 'errors="[0-9]*"' "$REGRESSION_XML" | grep -o '[0-9]*')
+              REGRESSION_SUCCESS=$((REGRESSION_TOTAL - REGRESSION_FAILURES - REGRESSION_ERRORS))
+          
+              echo "- Exitosas: ${REGRESSION_SUCCESS:-0}" >> $GITHUB_STEP_SUMMARY
+              echo "- Fallidas: ${REGRESSION_FAILURES:-0}" >> $GITHUB_STEP_SUMMARY
+              echo "- Errores: ${REGRESSION_ERRORS:-0}" >> $GITHUB_STEP_SUMMARY
+              echo "- Total: ${REGRESSION_TOTAL:-0}" >> $GITHUB_STEP_SUMMARY
+          
+              if [ "${REGRESSION_FAILURES:-0}" -gt 0 ] || [ "${REGRESSION_ERRORS:-0}" -gt 0 ]; then
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "❌ **REGRESIÓN DETECTADA**: Los cambios rompieron funcionalidades existentes" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "" >> $GITHUB_STEP_SUMMARY
+                echo "✅ **REGRESIÓN OK**: Los cambios no afectan funcionalidades existentes" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "- No se encontraron resultados específicos de regresión" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY      
 
   stress-test:
     runs-on: ubuntu-latest
@@ -173,7 +199,7 @@ jobs:
           echo "Verificando PostgreSQL..."
           for i in {1..30}; do
             if docker compose exec -T db pg_isready -U postgres; then
-              echo "PostgreSQL está listo ✅"
+              echo "PostgreSQL está listo"
               break
             fi
             echo "Esperando PostgreSQL... Intento $i de 30"
@@ -194,14 +220,14 @@ jobs:
           
             # Primero verificar que el contenedor esté corriendo
             if ! docker compose ps app | grep -q "Up"; then
-              echo "❌ El contenedor de la aplicación no está corriendo"
+              echo "El contenedor de la aplicación no está corriendo"
               docker compose logs app
               exit 1
             fi
           
             # Verificar conectividad básica al puerto
             if nc -z localhost 8080; then
-              echo "Puerto 8080 está abierto ✅"
+              echo "Puerto 8080 está abierto"
           
               # Intentar el endpoint de login
               HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8080/api/auth/login \
@@ -211,7 +237,7 @@ jobs:
               echo "Código de respuesta del login: $HTTP_CODE"
           
               if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "400" ] || [ "$HTTP_CODE" = "401" ]; then
-                echo "Aplicación está respondiendo ✅"
+                echo "Aplicación está respondiendo"
                 break
               fi
             else
@@ -219,7 +245,7 @@ jobs:
             fi
           
             if [ $i -eq 60 ]; then
-              echo "❌ La aplicación no respondió después de 10 minutos"
+              echo "La aplicación no respondió después de 10 minutos"
               echo "=== Logs finales de la aplicación ==="
               docker compose logs app
               echo "=== Estado final de contenedores ==="
@@ -241,7 +267,7 @@ jobs:
 
       - name: Generar resumen de pruebas de estrés
         run: |
-          echo "## 🚀 Resumen de Pruebas de Estrés (JMeter)" >> $GITHUB_STEP_SUMMARY
+          echo "## Resumen de Pruebas de Estrés (JMeter)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ -f "jmeter/resultados.jtl" ]; then
@@ -251,13 +277,13 @@ jobs:
             SUCCESS_REQUESTS=$((TOTAL_REQUESTS - FAILED_REQUESTS))
             SUCCESS_RATE=$(echo "scale=2; $SUCCESS_REQUESTS * 100 / $TOTAL_REQUESTS" | bc -l 2>/dev/null || echo "N/A")
           
-            echo "### 📊 Estadísticas Generales" >> $GITHUB_STEP_SUMMARY
-            echo "- 📈 Total de peticiones: $TOTAL_REQUESTS" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Exitosas: $SUCCESS_REQUESTS" >> $GITHUB_STEP_SUMMARY
-            echo "- ❌ Fallidas: $FAILED_REQUESTS" >> $GITHUB_STEP_SUMMARY
-            echo "- 📊 Tasa de éxito: ${SUCCESS_RATE}%" >> $GITHUB_STEP_SUMMARY
+            echo "###Estadísticas Generales" >> $GITHUB_STEP_SUMMARY
+            echo "-Total de peticiones: $TOTAL_REQUESTS" >> $GITHUB_STEP_SUMMARY
+            echo "-Exitosas: $SUCCESS_REQUESTS" >> $GITHUB_STEP_SUMMARY
+            echo "-Fallidas: $FAILED_REQUESTS" >> $GITHUB_STEP_SUMMARY
+            echo "-Tasa de éxito: ${SUCCESS_RATE}%" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📋 **Reporte HTML detallado disponible en los artefactos**" >> $GITHUB_STEP_SUMMARY
+            echo "**Reporte HTML detallado disponible en los artefactos**" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Guardar reporte JMeter como artefacto
@@ -344,10 +370,10 @@ jobs:
           </head>
           <body>
               <div class="container">
-                  <h1>📊 Reportes de Pruebas - Proyecto Final QA</h1>
+                  <h1>Reportes de Pruebas - Proyecto Final QA</h1>
           
                   <div class="report-section">
-                      <h2>🧪 Pruebas Unitarias (JUnit)</h2>
+                      <h2>Pruebas Unitarias (JUnit)</h2>
                       <p>Pruebas automatizadas de componentes individuales del sistema.</p>
                       <div class="report-links">
                           <a href="junit/index.html" target="_blank">Ver Reporte HTML</a>
@@ -355,7 +381,7 @@ jobs:
                   </div>
           
                   <div class="report-section">
-                      <h2>🥒 Pruebas de Aceptación (Cucumber)</h2>
+                      <h2>Pruebas de Aceptación (Cucumber)</h2>
                       <p>Pruebas de comportamiento basadas en escenarios de usuario.</p>
                       <div class="report-links">
                           <a href="cucumber/cucumber-report.html" target="_blank">Ver Reporte HTML</a>
@@ -363,7 +389,7 @@ jobs:
                   </div>
           
                   <div class="report-section">
-                      <h2>🚀 Pruebas de Estrés (JMeter)</h2>
+                      <h2>Pruebas de Estrés (JMeter)</h2>
                       <p>Pruebas de rendimiento y carga del sistema.</p>
                       <div class="report-links">
                           <a href="jmeter/index.html" target="_blank">Ver Reporte HTML</a>

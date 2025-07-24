@@ -7,6 +7,7 @@ import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Request.StockUpdateRequest;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +18,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class ProductoServiceTest {
-
+public class ProductoServiceTest {
     private ProductoService productoService;
     private ProductoRepository productoRepository;
     private MovimientoInventarioRepository movimientoInventarioRepository;
@@ -31,6 +31,7 @@ class ProductoServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void crearProducto_exitoso() {
         ProductoRequest request = new ProductoRequest("Mouse", "Mouse inalámbrico", "ELECTRONICA", 20.5f, 15);
 
@@ -67,6 +68,7 @@ class ProductoServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void actualizarProducto_exitoso() {
         Producto producto = new Producto();
         producto.setId(1L);
@@ -117,6 +119,7 @@ class ProductoServiceTest {
     }
 
     @Test
+    @Tag("critical")
     void eliminarProducto_exitoso() {
         Producto producto = new Producto();
         producto.setId(1L);
