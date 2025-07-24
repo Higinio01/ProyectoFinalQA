@@ -76,8 +76,8 @@ jobs:
         with:
           name: reportes-junit
           path: |
-            build/reports/tests/test/
-            build/test-results/test/
+            build/reports/tests/regressionTest/index.html
+            build/reports/tests/unitTest/index.html
           retention-days: 30
 
       - name: Guardar reportes Cucumber como artefacto
@@ -86,8 +86,8 @@ jobs:
         with:
           name: reportes-cucumber
           path: |
+            build/reports/tests/cucumberTest/index.html
             build/reports/cucumber-report.html
-            build/reports/cucumber/
           retention-days: 30
 
       - name: Guardar logs de pruebas (en caso de fallo)
