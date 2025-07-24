@@ -222,11 +222,32 @@ jobs:
       - name: Ejecutar prueba de estrés con JMeter
         run: |
           mkdir -p jmeter/reporte-html
+
+          # Extraer valores de las variables de entorno
+          JMETER_HOST=$(echo $API_BASE_URL | sed 's|http[s]*://||' | cut -d':' -f1)
+          JMETER_PORT=$(echo $API_BASE_URL | sed 's|http[s]*://||' | cut -d':' -f2 | cut -d'/' -f1)
+          JMETER_PROTOCOL=$(echo $API_BASE_URL | cut -d':' -f1)
+
+          # Si no hay puerto en la URL, usar el por defecto
+          if [ "$JMETER_PORT" = "$JMETER_HOST" ]; then
+            JMETER_PORT="8080"
+          fi
+
+          echo "Ejecutando JMeter con:"
+          echo "HOST: $JMETER_HOST"
+          echo "PORT: $JMETER_PORT" 
+          echo "PROTOCOL: $JMETER_PROTOCOL"
+
           apache-jmeter-5.6.3/bin/jmeter \
             -n \
             -t jmeter/Inventario_testplan.jmx \
             -l jmeter/resultados.jtl \
-            -e -o jmeter/reporte-html
+            -e -o jmeter/reporte-html \
+            -JHOST=$JMETER_HOST \
+            -JPORT=$JMETER_PORT \
+            -JPROTOCOL=$JMETER_PROTOCOL
+        env:
+          API_BASE_URL: http://localhost:8080
 
       - name: Guardar reporte JMeter como artefacto
         uses: actions/upload-artifact@v4
