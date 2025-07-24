@@ -96,3 +96,36 @@ test {
         systemProperty "spring.profiles.active", project.getProperty("profile")
     }
 }
+
+tasks.register('cucumberTest', Test) {
+    useJUnitPlatform()
+    include '**/CucumberTest*'
+    exclude '**/RegressionTestSuite*'
+    exclude '**/*ServiceTest*'  // Excluir tests unitarios
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+// Task específico solo para regresión
+tasks.register('regressionTest', Test) {
+    useJUnitPlatform()
+    include '**/RegressionTestSuite*'
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+// Task para tests unitarios solamente
+tasks.register('unitTest', Test) {
+    useJUnitPlatform()
+    include '**/*ServiceTest*'
+    exclude '**/CucumberTest*'
+    exclude '**/RegressionTestSuite*'
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
