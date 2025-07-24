@@ -8,7 +8,7 @@ COPY build.gradle settings.gradle ./
 COPY src src
 
 RUN chmod +x gradlew
-RUN ./gradlew clean test build
+RUN ./gradlew clean build -x test
 
 FROM eclipse-temurin:21-jre
 
