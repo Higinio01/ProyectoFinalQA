@@ -34,26 +34,71 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+    profiles:
+      - testing
   app:
     image: higinio01/proyectofinalqa-app:latest
     container_name: spring-inventario
     ports:
-      - "8080:8080"
+      - "${SERVER_PORT:-8080}:8080"
     depends_on:
       db:
         condition: service_healthy
     environment:
+      # ===== CONFIGURACIÓN DINÁMICA =====
+      # Base de datos
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: inventario_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+
+      # Servidor
+      SERVER_PORT: 8080
+
+      # API Configuration
+      API_BASE_URL: "http://localhost:8080"
+      API_VERSION: "v1"
+      API_CONTEXT_PATH: "/api"
+
+      # JWT
+      JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+      # JPA/Hibernate
+      JPA_SHOW_SQL: "true"
+
+      # URLs para integraciones externas (ejemplos)
+      PARTNER_API_URL: "http://external-partner-api:8081"
+      PARTNER_API_TIMEOUT: 5000
+      PAYMENT_API_URL: "http://external-payment-gateway:8082"
+
+      # Spring profiles
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/inventario_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: admin
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
-      SPRING_JPA_SHOW_SQL: "true"
-      SPRING_FLYWAY_ENABLED: "true"
-      APPLICATION_SECURITY_JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     restart: unless-stopped
     command: [ "./wait-for-it.sh", "db:5432", "java", "-jar", "/app/app.jar" ]
+
+  # ===== SERVICIOS MOCK PARA INTEGRACIONES (OPCIONAL) =====
+  # Simula APIs externas para testing
+  mock-partner-api:
+    image: wiremock/wiremock:2.35.0
+    container_name: mock-partner-api
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./wiremock/mappings:/home/wiremock/mappings
+      - ./wiremock/__files:/home/wiremock/__files
+    command: ["--port", "8080", "--verbose"]
+    profiles:
+      - testing  # Solo se ejecuta con: docker-compose --profile testing up
+
+  mock-payment-gateway:
+    image: wiremock/wiremock:2.35.0
+    container_name: mock-payment-gateway
+    ports:
+      - "8082:8080"
+    command: ["--port", "8080", "--verbose"]
+    profiles:
+      - testing
 
 volumes:
   inventario-data:

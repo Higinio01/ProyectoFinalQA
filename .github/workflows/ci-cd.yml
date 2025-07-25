@@ -198,7 +198,10 @@ jobs:
             -n \
             -t jmeter/Inventario_testplan.jmx \
             -l jmeter/resultados.jtl \
-            -e -o jmeter/reporte-html
+            -e -o jmeter/reporte-html \
+            -JHOST=localhost \
+            -JPORT=8080 \
+            -JPROTOCOL=http
 
       - name: Guardar reporte JMeter como artefacto
         uses: actions/upload-artifact@v4
