@@ -32,4 +32,16 @@ public class Producto {
     @Column(name = "minimo_stock", nullable = false)
     private Integer minimoStock;
 
+    public Producto(Long id, String nombre, String descripcion, Categoria categoria, float precio, Integer cantidad ) {
+        this.id = id;
+        this.nombre = nombre;
+        this.descripcion = descripcion;
+        this.categoria = categoria;
+        this.precio = precio;
+        this.cantidad = cantidad;
+    }
+
+    public Producto() {
+
+    }
 }

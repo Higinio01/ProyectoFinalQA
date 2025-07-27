@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
@@ -27,4 +29,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
                                     @Param("precioMax") Double precioMax,
                                     @Param("busqueda") String busqueda,
                                     Pageable pageable);
+
+    @Query("SELECT p FROM Producto p WHERE p.cantidad <= p.minimoStock")
+    List<Producto> findProductosConStockBajo();
+
 }

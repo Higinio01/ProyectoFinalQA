@@ -111,4 +111,10 @@ public class ProductoController {
         return ResponseEntity.ok(metricas);
     }
 
+    @GetMapping("/stock-bajo")
+    public ResponseEntity<List<ProductoDto>> obtenerProductosConStockBajo() {
+        List<Producto> productosBajoStock = inventarioService.obtenerProductosConStockBajo();
+        return ResponseEntity.ok(productosBajoStock.stream().map(producto -> modelMapper.map(producto, ProductoDto.class)).toList());
+    }
+
 }

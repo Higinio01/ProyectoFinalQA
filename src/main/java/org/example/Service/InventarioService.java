@@ -142,5 +142,21 @@ public class InventarioService {
                 }).toList();
     }
 
+    public List<Producto> obtenerProductosConStockBajo() {
+        return productoRepository.findProductosConStockBajo()
+                .stream()
+                .map(p -> new Producto(
+                        p.getId(),
+                        p.getNombre(),
+                        p.getDescripcion(),
+                        p.getCategoria(),
+                        p.getPrecio(),
+                        p.getCantidad()
+                ))
+                .toList();
+    }
+
+
+
 
 }
