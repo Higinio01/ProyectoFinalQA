@@ -29,4 +29,7 @@ public class Producto {
     @Column(name = "stock", nullable = false)
     private Integer cantidad;
 
+    @Column(name = "minimo_stock", nullable = false)
+    private Integer minimoStock;
+
 }

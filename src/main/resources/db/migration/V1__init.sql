@@ -23,8 +23,10 @@ CREATE TABLE productos (
     descripcion TEXT,
     categoria VARCHAR(50) NOT NULL,
     precio FLOAT NOT NULL CHECK (precio >= 0),
-    stock INT NOT NULL CHECK (stock >= 0)
+    stock INT NOT NULL CHECK (stock >= 0),
+    minimo_stock INT NOT NULL CHECK (minimo_stock >= 0)
 );
+
 
 -- Tabla de movimientos de inventario
 CREATE TABLE movimiento_inventario (
