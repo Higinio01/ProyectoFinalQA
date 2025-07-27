@@ -10,7 +10,7 @@ import java.time.Duration;
 public class TokenValidationCache {
 
     private final Cache<String, Boolean> tokenCache = Caffeine.newBuilder()
-            .expireAfterWrite(Duration.ofMinutes(1))
+            .expireAfterWrite(Duration.ofSeconds(30))
             .maximumSize(10000)
             .build();
 

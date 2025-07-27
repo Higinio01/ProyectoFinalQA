@@ -2,6 +2,7 @@ package org.example.Service;
 
 import jakarta.validation.constraints.NotNull;
 import org.example.Entity.Categoria;
+import org.example.Entity.MovimientoInventario;
 import org.example.Entity.Producto;
 import org.example.Exception.ProductoException;
 import org.example.Repository.MovimientoInventarioRepository;
@@ -14,7 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductoService {
@@ -140,4 +144,35 @@ public class ProductoService {
 
         return productoRepository.findAll(pageable);
     }
+
+    public Map<String, Object> obtenerMetricasDashboard() {
+        List<Producto> productos = productoRepository.findAll();
+
+        long total = productos.size();
+        long stockBajo = productos.stream().filter(p -> p.getCantidad() < 10).count();
+
+        List<Map<String, Object>> actividad = movimientoInventarioRepository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        m -> m.getProducto().getNombre(),
+                        Collectors.summingInt(MovimientoInventario::getCantidad)))
+                .entrySet().stream()
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(5)
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("nombre", entry.getKey());
+                    map.put("cantidad", entry.getValue());
+                    return map;
+                })
+                .toList();
+
+
+        Map<String, Object> datos = new HashMap<>();
+        datos.put("totalProductos", total);
+        datos.put("stockBajo", stockBajo);
+        datos.put("topActividad", actividad);
+
+        return datos;
+    }
+
 }

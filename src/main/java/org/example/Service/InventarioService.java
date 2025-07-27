@@ -13,7 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class InventarioService {
@@ -96,4 +99,48 @@ public class InventarioService {
     public List<MovimientoInventario> obtenerMovimientosPorUsuario(String usuarioResponsable) {
         return movimientoInventarioRepository.findByUsuarioResponsableOrderByFechaMovimientoDesc(usuarioResponsable);
     }
+
+    public Map<String, Object> obtenerEstadisticasGenerales() {
+        List<Producto> productos = productoRepository.findAll();
+        List<MovimientoInventario> movimientos = movimientoInventarioRepository.findAll();
+
+        Map<String, Long> movimientosPorTipo = movimientos.stream()
+                .collect(Collectors.groupingBy(MovimientoInventario::getTipoMovimiento, Collectors.counting()));
+
+        Map<String, Long> stockPorCategoria = productos.stream()
+                .collect(Collectors.groupingBy(p -> p.getCategoria().toString(),
+                        Collectors.summingLong(Producto::getCantidad)));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalProductos", productos.size());
+        result.put("stockTotal", productos.stream().mapToInt(Producto::getCantidad).sum());
+        result.put("movimientosPorTipo", movimientosPorTipo);
+        result.put("stockPorCategoria", stockPorCategoria);
+
+        return result;
+    }
+
+    public List<Map<String, Object>> obtenerTopProductosPorVentas() {
+        List<MovimientoInventario> movimientos = movimientoInventarioRepository.findByTipoMovimiento("SALIDA");
+
+        Map<Producto, Float> ventasPorProducto = new HashMap<>();
+
+        for (MovimientoInventario mov : movimientos) {
+            Producto prod = mov.getProducto();
+            float totalVenta = prod.getPrecio() * mov.getCantidad();
+            ventasPorProducto.put(prod, ventasPorProducto.getOrDefault(prod, 0f) + totalVenta);
+        }
+
+        return ventasPorProducto.entrySet().stream()
+                .sorted((a, b) -> Float.compare(b.getValue(), a.getValue()))
+                .limit(5)
+                .map(entry -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("nombre", entry.getKey().getNombre());
+                    map.put("valorTotal", entry.getValue());
+                    return map;
+                }).toList();
+    }
+
+
 }

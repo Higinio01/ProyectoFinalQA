@@ -72,21 +72,21 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         final String jwt = authHeader.substring(7);
 
         try {
-            log.info("🎯 TOKEN RECIBIDO - Longitud: {}, Primeros 20 chars: '{}'",
+            log.info("TOKEN RECIBIDO - Longitud: {}, Primeros 20 chars: '{}'",
                     jwt.length(), jwt.substring(0, Math.min(jwt.length(), 20)));
 
             Boolean cachedValidity = tokenValidationCache.get(jwt);
 
-            log.info("🔎 CONSULTA CACHE - Resultado: {}", cachedValidity);
+            log.info("CONSULTA CACHE - Resultado: {}", cachedValidity);
 
             if (cachedValidity != null) {
-                log.info("🟢 CACHE HIT - Valor encontrado: {}", cachedValidity);
+                log.info("CACHE HIT - Valor encontrado: {}", cachedValidity);
                 if (!cachedValidity) {
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token revocado o inválido (cache).");
                     return;
                 }
             } else {
-                log.info("🔴 CACHE MISS - Consultando BD para token");
+                log.info("CACHE MISS - Consultando BD para token");
 
                 boolean isValid = apiTokenRepository.findByToken(jwt)
                         .map(ApiToken::getUsuario)

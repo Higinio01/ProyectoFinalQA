@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -71,4 +72,17 @@ public class InventarioController {
         List<MovimientoInventario> movimientos = inventarioService.obtenerMovimientosPorUsuario(usuarioResponsable);
         return ResponseEntity.ok(movimientos.stream().map(movimiento -> modelMapper.map(movimiento, MovimientoInventarioDto.class)).toList());
     }
+
+    @GetMapping("/estadisticas")
+    public ResponseEntity<Map<String, Object>> obtenerEstadisticasGenerales() {
+        Map<String, Object> estadisticas = inventarioService.obtenerEstadisticasGenerales();
+        return ResponseEntity.ok(estadisticas);
+    }
+
+    @GetMapping("/top-productos-por-valor")
+    public ResponseEntity<List<Map<String, Object>>> obtenerTopProductosPorValor() {
+        List<Map<String, Object>> topProductos = inventarioService.obtenerTopProductosPorVentas();
+        return ResponseEntity.ok(topProductos);
+    }
+
 }

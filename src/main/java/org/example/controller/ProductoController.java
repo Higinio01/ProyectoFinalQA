@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -103,4 +104,11 @@ public class ProductoController {
         ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/dashboard-metricas")
+    public ResponseEntity<Map<String, Object>> obtenerMetricasProductos() {
+        Map<String, Object> metricas = productoService.obtenerMetricasDashboard();
+        return ResponseEntity.ok(metricas);
+    }
+
 }
