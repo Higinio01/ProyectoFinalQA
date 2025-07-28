@@ -33,7 +33,7 @@ public class ProductoServiceTest {
     @Test
     @Tag("critical")
     void crearProducto_exitoso() {
-        ProductoRequest request = new ProductoRequest("Mouse", "Mouse inalámbrico", "ELECTRONICA", 20.5f, 15);
+        ProductoRequest request = new ProductoRequest("Mouse", "Mouse inalámbrico", "ELECTRONICA", 20.5f, 15, 5);
 
         Producto productoMock = new Producto();
         productoMock.setId(1L);
@@ -49,7 +49,7 @@ public class ProductoServiceTest {
 
     @Test
     void crearProducto_categoriaInvalida_lanzaExcepcion() {
-        ProductoRequest request = new ProductoRequest("Mouse", "Mouse inalámbrico", "INVALIDA", 25.1f, 15);
+        ProductoRequest request = new ProductoRequest("Mouse", "Mouse inalámbrico", "INVALIDA", 25.1f, 15, 5);
 
         ProductoException.CategoriaInvalida ex = assertThrows(ProductoException.CategoriaInvalida.class,
                 () -> productoService.crearProducto(request));
@@ -59,7 +59,7 @@ public class ProductoServiceTest {
 
     @Test
     void crearProducto_precioNegativo_lanzaExcepcion() {
-        ProductoRequest request = new ProductoRequest("Teclado", "Teclado mecánico", "ELECTRONICA", -10.0f, 5);
+        ProductoRequest request = new ProductoRequest("Teclado", "Teclado mecánico", "ELECTRONICA", -10.0f, 5, 2);
 
         ProductoException.ValorInvalido ex = assertThrows(ProductoException.ValorInvalido.class,
                 () -> productoService.crearProducto(request));
@@ -73,7 +73,7 @@ public class ProductoServiceTest {
         Producto producto = new Producto();
         producto.setId(1L);
 
-        ProductoRequest request = new ProductoRequest("Teclado", "Teclado gamer", "ELECTRONICA", 30.0f, 10);
+        ProductoRequest request = new ProductoRequest("Teclado", "Teclado gamer", "ELECTRONICA", 30.0f, 10, 3);
 
         when(productoRepository.findById(1L)).thenReturn(Optional.of(producto));
         when(productoRepository.save(any(Producto.class))).thenReturn(producto);
