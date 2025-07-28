@@ -69,6 +69,7 @@ public class ProductoService {
 
         productoExistente.setPrecio(request.precio());
         productoExistente.setCantidad(request.cantidad());
+        productoExistente.setMinimoStock(request.minimoStock());
 
         return productoRepository.save(productoExistente);
     }
@@ -149,7 +150,7 @@ public class ProductoService {
         List<Producto> productos = productoRepository.findAll();
 
         long total = productos.size();
-        long stockBajo = productos.stream().filter(p -> p.getCantidad() < 10).count();
+        long stockBajo = productos.stream().filter(p -> p.getCantidad() < p.getMinimoStock()).count();
 
         List<Map<String, Object>> actividad = movimientoInventarioRepository.findAll().stream()
                 .collect(Collectors.groupingBy(

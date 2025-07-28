@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -78,6 +79,41 @@ public class InventarioService {
         Pageable pageable = PageRequest.of(page, size);
         return movimientoInventarioRepository.findAllByOrderByFechaMovimientoDesc(pageable);
     }
+
+    public Page<MovimientoInventario> obtenerHistorialDeMovimientos(int page, int size, String tipo, String fecha) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        if ((tipo == null || tipo.isBlank()) && (fecha == null || fecha.isBlank())) {
+            return movimientoInventarioRepository.findAll(pageable);
+        }
+
+        if (tipo != null && !tipo.isBlank() && fecha != null && !fecha.isBlank()) {
+            LocalDate parsedDate = LocalDate.parse(fecha);
+            return movimientoInventarioRepository.findByTipoMovimientoAndFechaMovimientoBetween(
+                    tipo.toUpperCase(),
+                    parsedDate.atStartOfDay(),
+                    parsedDate.plusDays(1).atStartOfDay(),
+                    pageable
+            );
+        }
+
+        if (tipo != null && !tipo.isBlank()) {
+            return movimientoInventarioRepository.findByTipoMovimientoIgnoreCase(tipo, pageable);
+        }
+
+        if (fecha != null && !fecha.isBlank()) {
+            LocalDate parsedDate = LocalDate.parse(fecha);
+            return movimientoInventarioRepository.findByFechaMovimientoBetween(
+                    parsedDate.atStartOfDay(),
+                    parsedDate.plusDays(1).atStartOfDay(),
+                    pageable
+            );
+        }
+
+        return movimientoInventarioRepository.findAllByOrderByFechaMovimientoDesc(pageable);
+    }
+
+
 
     public List<MovimientoInventario> obtenerHistorialPorProducto(Long productoId) {
         return movimientoInventarioRepository.findByProductoIdOrderByFechaMovimientoDesc(productoId);

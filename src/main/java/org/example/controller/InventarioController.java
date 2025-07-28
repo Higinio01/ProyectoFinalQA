@@ -43,11 +43,14 @@ public class InventarioController {
     @GetMapping("/historial")
     public ResponseEntity<Page<MovimientoInventarioDto>> obtenerHistorialDeMovimientos(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String tipo,
+            @RequestParam(required = false) String fecha
     ) {
-        Page<MovimientoInventario> historial = inventarioService.obtenerHistorialDeMovimientos(page, size);
+        Page<MovimientoInventario> historial = inventarioService.obtenerHistorialDeMovimientos(page, size, tipo, fecha);
         return ResponseEntity.ok(historial.map(movimiento -> modelMapper.map(movimiento, MovimientoInventarioDto.class)));
     }
+
 
     @GetMapping("/historial/producto/{productoId}")
     public ResponseEntity<List<MovimientoInventarioDto>> obtenerHistorialPorProducto(@PathVariable Long productoId) {

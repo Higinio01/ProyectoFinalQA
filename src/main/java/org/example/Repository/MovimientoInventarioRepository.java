@@ -54,4 +54,16 @@ public interface MovimientoInventarioRepository extends JpaRepository<Movimiento
     void deleteByProductoId(Long id);
 
     List<MovimientoInventario> findByTipoMovimiento(String salida);
+
+    Page<MovimientoInventario> findByTipoMovimientoIgnoreCase(String tipoMovimiento, Pageable pageable);
+
+    Page<MovimientoInventario> findByFechaMovimientoBetween(LocalDateTime inicio, LocalDateTime fin, Pageable pageable);
+
+    Page<MovimientoInventario> findByTipoMovimientoAndFechaMovimientoBetween(
+            String tipoMovimiento,
+            LocalDateTime inicio,
+            LocalDateTime fin,
+            Pageable pageable
+    );
+
 }

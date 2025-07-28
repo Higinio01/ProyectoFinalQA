@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
+    List<Producto> findBy
+
     @Query(value = "SELECT * FROM productos p WHERE " +
             "(:nombre IS NULL OR LOWER(p.nombre) LIKE LOWER(CONCAT('%', CAST(:nombre AS TEXT), '%'))) AND " +
             "(:categoria IS NULL OR p.categoria = :categoria) AND " +

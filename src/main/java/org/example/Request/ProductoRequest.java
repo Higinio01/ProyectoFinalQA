@@ -7,5 +7,6 @@ public record ProductoRequest(
         String descripcion,
         String categoria,
         float precio,
-        int cantidad
+        int cantidad,
+        int minimoStock
 ) implements Serializable {}

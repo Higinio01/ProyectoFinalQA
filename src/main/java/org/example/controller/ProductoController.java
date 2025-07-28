@@ -61,7 +61,7 @@ public class ProductoController {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Producto> productos = productoService.buscarProductos(nombre, categoria, precioMin, precioMax, busqueda, pageable);
-        Page<ProductoDto> dtoPage = productos.map(p -> new ProductoDto(p.getId(),p.getNombre(),p.getDescripcion(), p.getCategoria(), p.getPrecio(), p.getCantidad()));
+        Page<ProductoDto> dtoPage = productos.map(p -> new ProductoDto(p.getId(),p.getNombre(),p.getDescripcion(), p.getCategoria(), p.getPrecio(), p.getCantidad(), p.getMinimoStock()));
 
         return ResponseEntity.ok(dtoPage);
     }
