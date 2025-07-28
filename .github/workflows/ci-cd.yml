@@ -191,6 +191,17 @@ jobs:
             sleep 10
           done
 
+      - name: Crear archivo CSV para pruebas de seguridad
+        run: |
+          cat > jmeter/login_payloads.csv << 'EOF'
+          email_payload,description
+          admin@test.com' OR '1'='1' --,Bypass password
+          ' UNION SELECT email FROM usuarios --,Extract emails
+          admin@test.com'; DROP TABLE usuarios; --,Drop table test
+          ' OR id_rol=1 --,Target admin role
+          test@test.com'/*,Comment injection
+          EOF
+
       - name: Ejecutar prueba de estrés con JMeter
         run: |
           mkdir -p jmeter/reporte-html
@@ -203,6 +214,18 @@ jobs:
             -JPORT=8080 \
             -JPROTOCOL=http
 
+      - name: Ejecutar pruebas de seguridad con JMeter
+        run: |
+          mkdir -p jmeter/reporte-seguridad
+          apache-jmeter-5.6.3/bin/jmeter \
+            -n \
+            -t jmeter/Inventario_securityTest.jmx \
+            -l jmeter/resultados-seguridad.jtl \
+            -e -o jmeter/reporte-seguridad \
+            -JHOST=localhost \
+            -JPORT=8080 \
+            -JPROTOCOL=http
+
       - name: Guardar reporte JMeter como artefacto
         uses: actions/upload-artifact@v4
         if: always()
@@ -211,6 +234,16 @@ jobs:
           path: |
             jmeter/reporte-html/
             jmeter/resultados.jtl
+          retention-days: 30
+
+      - name: Guardar reporte de seguridad como artefacto
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reporte-seguridad
+          path: |
+            jmeter/reporte-seguridad/
+            jmeter/resultados-seguridad.jtl
           retention-days: 30
 
       - name: Guardar logs como artefacto (en caso de fallo)
@@ -239,4 +272,10 @@ jobs:
           pr_title: "Auto PR: Merge dev to main"
           pr_body: |
             All tests passed successfully!
+            
+            📊 Tests ejecutados:
+            - ✅ Technical Regression Tests
+            - ✅ User Flows Regression (Cucumber)
+            - ✅ Stress Tests (JMeter)
+            - ✅ Security Tests (SQL Injection + JWT Brute Force)
           github_token: ${{ secrets.PERSONAL_TOKEN }}
