@@ -3,7 +3,6 @@ package org.example.Service;
 import org.example.Entity.ApiToken;
 import org.example.Entity.EstadoUsuario;
 import org.example.Entity.Usuario;
-import org.example.Exception.ResourceNotFoundException;
 import org.example.Repository.ApiTokenRepository;
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.LoginRequest;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.util.Optional;
 
@@ -27,14 +25,13 @@ public class AutenticacionServiceTest {
     private ApiTokenRepository apiTokenRepository;
     private AuthenticationManager authenticationManager;
     private UsuarioRepository usuarioRepository;
-    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
         apiTokenRepository = mock(ApiTokenRepository.class);
         authenticationManager = mock(AuthenticationManager.class);
         usuarioRepository = mock(UsuarioRepository.class);
-        jwtService = mock(JwtService.class);
+        JwtService jwtService = mock(JwtService.class);
 
         autenticacionService = new AutenticacionService(
                 apiTokenRepository, authenticationManager, usuarioRepository, jwtService
@@ -69,7 +66,7 @@ public class AutenticacionServiceTest {
 
         LoginRequest request = new LoginRequest("no@existe.com", "1234");
 
-        assertThrows(ResourceNotFoundException.class, () -> autenticacionService.login(request));
+        assertThrows(BadCredentialsException.class, () -> autenticacionService.login(request));
     }
 
     @Test
