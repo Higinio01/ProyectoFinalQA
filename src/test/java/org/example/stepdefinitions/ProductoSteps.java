@@ -38,7 +38,8 @@ public class ProductoSteps {
     @When("creo un producto con nombre {string}, descripcion {string}, categoria {string}, precio {double} y cantidad {int}")
     public void creoUnProducto(String nombre, String descripcion, String categoriaString, double precio, int cantidad) {
         try {
-            ProductoRequest request = new ProductoRequest(nombre, descripcion, categoriaString, (float) precio, cantidad);
+            // ✅ CORREGIDO: Agregado minimoStock (línea 41)
+            ProductoRequest request = new ProductoRequest(nombre, descripcion, categoriaString, (float) precio, cantidad, 5);
             // Asignar el resultado para evitar NPE
             Producto producto = productoService.crearProducto(request);
             productoCreado = modelMapper.map(producto, ProductoDto.class);
@@ -86,18 +87,22 @@ public class ProductoSteps {
         producto.setCategoria(categoriaEnum);
         producto.setPrecio((float) precio);
         producto.setCantidad(cantidad);
+        // ✅ También necesitas setear minimoStock aquí
+        producto.setMinimoStock(3); // valor por defecto para productos existentes
         productoExistente = productoRepository.save(producto);
     }
 
     @When("actualizo el producto a nombre {string}, descripcion {string}, categoria {string}, precio {double} y cantidad {int}")
     public void actualizoElProducto(String nombre, String descripcion, String categoriaString, double precio, int cantidad) {
         try {
+            // ✅ CORREGIDO: Agregado minimoStock (línea 95)
             ProductoRequest request = new ProductoRequest(
                     nombre,
                     descripcion,
                     categoriaString,
                     (float) precio,
-                    cantidad
+                    cantidad,
+                    3  // minimoStock
             );
             productoService.actualizarProducto(productoExistente.getId(), request);
         } catch (Exception e) {
@@ -129,6 +134,8 @@ public class ProductoSteps {
         producto.setCategoria(categoriaEnum);
         producto.setPrecio((float) precio);
         producto.setCantidad(cantidad);
+        // ✅ También necesitas setear minimoStock aquí
+        producto.setMinimoStock(3); // valor por defecto para productos a eliminar
         productoExistente = productoRepository.save(producto);
     }
 
