@@ -313,10 +313,12 @@ jobs:
             if [ -d "ProyectoFinalQA" ]; then
               cd ProyectoFinalQA
 
-              echo "🛑 Deteniendo solo aplicaciones (preservando DB)..."
-              # Detener aplicaciones sin afectar depends_on
-              docker stop spring-inventario vue-frontend 2>/dev/null || true
-              docker rm -f spring-inventario vue-frontend 2>/dev/null || true
+              echo "🛑 Deteniendo y limpiando contenedores existentes..."
+              # Detener todos los servicios primero
+              docker-compose down --remove-orphans
+
+              # Limpiar contenedores con el mismo nombre si existen
+              docker rm -f inventario-db spring-inventario vue-frontend 2>/dev/null || true
 
               echo "🔄 Actualizando código..."
               git pull origin main
@@ -325,69 +327,57 @@ jobs:
               git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git ProyectoFinalQA
               cd ProyectoFinalQA
 
-              echo "🗄️ Iniciando base de datos (primera vez)..."
-              docker-compose up -d db
-
-              # Esperar a que la base de datos esté lista
-              echo "⏳ Esperando a que PostgreSQL esté listo..."
-              for i in {1..30}; do
-                if docker-compose exec -T db pg_isready -U postgres; then
-                  echo "✅ PostgreSQL está listo"
-                  break
-                fi
-                if [ $i -eq 30 ]; then
-                  echo "❌ PostgreSQL no respondió después de 5 minutos"
-                  docker-compose logs db
-                  exit 1
-                fi
-                echo "⏳ Esperando PostgreSQL... intento $i/30"
-                sleep 10
-              done
+              echo "🧹 Limpiando contenedores existentes por si acaso..."
+              docker rm -f inventario-db spring-inventario vue-frontend 2>/dev/null || true
             fi
 
             echo "📦 Descargando imágenes actualizadas..."
-            docker-compose pull app vue-app
+            docker-compose pull app vue-app db 2>/dev/null || docker-compose pull
 
-            echo "🧹 Limpiando contenedores huérfanos (solo apps)..."
+            echo "🧹 Limpiando contenedores huérfanos..."
             docker container prune -f
 
-            echo "🚀 Iniciando aplicaciones actualizadas..."
-            # Asegurar que DB esté healthy antes de levantar apps
-            if ! docker-compose ps db | grep -q "Up (healthy)"; then
-              echo "🗄️ Iniciando/verificando base de datos..."
-              docker-compose up -d db
+            echo "🗄️ Iniciando base de datos..."
+            docker-compose up -d db
 
-              # Esperar a que esté healthy
-              for i in {1..30}; do
-                if docker-compose ps db | grep -q "Up (healthy)"; then
-                  echo "✅ PostgreSQL está healthy"
-                  break
-                fi
-                if [ $i -eq 30 ]; then
-                  echo "❌ PostgreSQL no alcanzó estado healthy"
-                  docker-compose logs db
-                  exit 1
-                fi
-                echo "⏳ Esperando PostgreSQL healthy... intento $i/30"
-                sleep 10
-              done
-            fi
+            # Esperar a que la base de datos esté lista
+            echo "⏳ Esperando a que PostgreSQL esté listo..."
+            for i in {1..30}; do
+              if docker-compose exec -T db pg_isready -U postgres 2>/dev/null; then
+                echo "✅ PostgreSQL está listo"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "❌ PostgreSQL no respondió después de 5 minutos"
+                echo "📋 Logs de PostgreSQL:"
+                docker-compose logs db
+                exit 1
+              fi
+              echo "⏳ Esperando PostgreSQL... intento $i/30"
+              sleep 10
+            done
 
-            # Ahora sí levantar las apps (depends_on funcionará)
+            echo "🚀 Iniciando aplicaciones..."
             docker-compose up -d app vue-app
 
             echo "⏳ Verificando que la aplicación esté funcionando..."
             sleep 30
             for i in {1..12}; do
-              # Verifica si el puerto está abierto
-              if nc -z localhost 8080; then
-                echo "✅ Aplicación está respondiendo en puerto 8080"
-                break
+              # Verifica si el contenedor está corriendo
+              if docker-compose ps app | grep -q "Up"; then
+                # Verifica si el puerto está abierto
+                if nc -z localhost 8080 2>/dev/null; then
+                  echo "✅ Aplicación está respondiendo en puerto 8080"
+                  break
+                fi
               fi
+
               if [ $i -eq 12 ]; then
                 echo "❌ La aplicación no respondió después de 2 minutos"
                 echo "📋 Logs de la aplicación:"
                 docker-compose logs --tail=50 app
+                echo "📋 Logs del frontend:"
+                docker-compose logs --tail=20 vue-app
                 echo "📋 Estado de contenedores:"
                 docker-compose ps
                 exit 1
