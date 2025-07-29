@@ -315,5 +315,6 @@ jobs:
               git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git ProyectoFinalQA
               cd ProyectoFinalQA
             fi
+            docker-compose down -v
             docker-compose pull
-            docker-compose up -d --force-recreate --remove-orphans
+            docker-compose up -d
