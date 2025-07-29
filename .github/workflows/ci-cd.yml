@@ -315,6 +315,5 @@ jobs:
               git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git ProyectoFinalQA
               cd ProyectoFinalQA
             fi
-            docker-compose down -v
-            docker-compose pull
-            docker-compose up -d
+            docker-compose pull app vue-app
+            docker-compose up -d app vue-app
