@@ -33,7 +33,7 @@ public class AutenticacionController {
             final TokenResponse token = autenticacionService.login(loginRequest);
 
             log.info("Login exitoso para usuario: {}", loginRequest.email());
-            System.out.println("JEISON VENDE RULO Login exitoso para usuario: " + loginRequest.email());
+            System.out.println("Login exitoso para usuario: " + loginRequest.email());
             return ResponseEntity.ok(token);
 
         } catch (BadCredentialsException e) {
