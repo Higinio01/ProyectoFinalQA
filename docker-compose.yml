@@ -41,8 +41,8 @@ services:
     container_name: spring-inventario
     ports:
       - "${SERVER_PORT:-8080}:8080"
-    depends_on:
-      - db  # Recomiendo habilitarlo
+#    depends_on:
+#      - db  # Recomiendo habilitarlo
     environment:
       DB_HOST: db
       DB_PORT: 5432
