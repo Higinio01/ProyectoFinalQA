@@ -279,3 +279,40 @@ jobs:
             - ✅ Stress Tests (JMeter)
             - ✅ Security Tests (SQL Injection + JWT Brute Force)
           github_token: ${{ secrets.PERSONAL_TOKEN }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [ stress-test ]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Build & Push Backend Image
+        run: |
+          docker build -t higinio01/backend-qa:latest .
+          docker push higinio01/backend-qa:latest
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            if [ -d "ProyectoFinalQA" ]; then
+              cd ProyectoFinalQA
+              git pull origin main
+            else
+              git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git ProyectoFinalQA
+              cd ProyectoFinalQA
+            fi
+            docker-compose pull
+            docker-compose up -d

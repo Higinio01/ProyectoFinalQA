@@ -37,7 +37,7 @@ services:
     profiles:
       - testing
   app:
-    image: higinio01/proyectofinalqa-app:latest
+    image: higinio01/backend-qa:latest
     container_name: spring-inventario
     ports:
       - "${SERVER_PORT:-8080}:8080"
@@ -45,40 +45,31 @@ services:
       db:
         condition: service_healthy
     environment:
-      # ===== CONFIGURACIÓN DINÁMICA =====
-      # Base de datos
+
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: inventario_db
       DB_USERNAME: postgres
       DB_PASSWORD: admin
 
-      # Servidor
       SERVER_PORT: 8080
 
-      # API Configuration
       API_BASE_URL: "http://localhost:8080"
       API_VERSION: "v1"
       API_CONTEXT_PATH: "/api"
 
-      # JWT
       JWT_SECRET_KEY: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 
-      # JPA/Hibernate
       JPA_SHOW_SQL: "true"
 
-      # URLs para integraciones externas (ejemplos)
       PARTNER_API_URL: "http://external-partner-api:8081"
       PARTNER_API_TIMEOUT: 5000
       PAYMENT_API_URL: "http://external-payment-gateway:8082"
 
-      # Spring profiles
       SPRING_PROFILES_ACTIVE: prod
     restart: unless-stopped
     command: [ "./wait-for-it.sh", "db:5432", "java", "-jar", "/app/app.jar" ]
 
-  # ===== SERVICIOS MOCK PARA INTEGRACIONES (OPCIONAL) =====
-  # Simula APIs externas para testing
   mock-partner-api:
     image: wiremock/wiremock:2.35.0
     container_name: mock-partner-api
@@ -89,7 +80,7 @@ services:
       - ./wiremock/__files:/home/wiremock/__files
     command: ["--port", "8080", "--verbose"]
     profiles:
-      - testing  # Solo se ejecuta con: docker-compose --profile testing up
+      - testing
 
   mock-payment-gateway:
     image: wiremock/wiremock:2.35.0
@@ -99,6 +90,15 @@ services:
     command: ["--port", "8080", "--verbose"]
     profiles:
       - testing
+
+  vue-app:
+    image: smct0001/vue-app:latest
+    container_name: vue-frontend
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    depends_on:
+      - app
 
 volumes:
   inventario-data:
