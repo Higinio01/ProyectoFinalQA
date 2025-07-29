@@ -1,0 +1,168 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Infraestructura para correr el proyecto inventario con Docker en EC2 con Elastic IP"
+
+Parameters:
+  KeyName:
+    Description: Nombre de la clave SSH para acceder a EC2
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: edusync-key
+  InstanceType:
+    Description: Tipo de instancia EC2
+    Type: String
+    Default: t3.medium
+
+Resources:
+  # VPC
+  InventarioVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: InventarioVPC
+
+  # Subnet
+  InventarioSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref InventarioVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: InventarioSubnet
+
+  # Internet Gateway
+  InventarioIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: InventarioIGW
+
+  InventarioAttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref InventarioVPC
+      InternetGatewayId: !Ref InventarioIGW
+
+  # Route Table
+  InventarioRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref InventarioVPC
+      Tags:
+        - Key: Name
+          Value: InventarioRouteTable
+
+  InventarioRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InventarioAttachGateway
+    Properties:
+      RouteTableId: !Ref InventarioRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InventarioIGW
+
+  InventarioSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref InventarioSubnet
+      RouteTableId: !Ref InventarioRouteTable
+
+  # Security Group
+  InventarioSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Acceso a EC2 desde cualquier IP
+      VpcId: !Ref InventarioVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+
+  # IAM Role para EC2
+  InventarioEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Tags:
+        - Key: Name
+          Value: InventarioEC2Role
+
+  InventarioInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref InventarioEC2Role
+
+  # EC2 Instance
+  InventarioEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SubnetId: !Ref InventarioSubnet
+      SecurityGroupIds:
+        - !Ref InventarioSG
+      IamInstanceProfile: !Ref InventarioInstanceProfile
+      ImageId: ami-08a6efd148b1f7504
+      Tags:
+        - Key: Name
+          Value: InventarioEC2
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          amazon-linux-extras enable docker
+          yum install -y docker git
+          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          service docker start
+          usermod -aG docker ec2-user
+
+          cd /home/ec2-user
+          # Clona tu repo y especifica la rama
+          git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git app
+          cd app
+          docker-compose up -d
+
+  # Elastic IP
+  InventarioEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  InventarioEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref InventarioEC2Instance
+      EIP: !Ref InventarioEIP
+
+Outputs:
+  ElasticIP:
+    Description: Elastic IP de la instancia
+    Value: !Ref InventarioEIP
