@@ -10,6 +10,16 @@ Parameters:
     Description: Tipo de instancia EC2
     Type: String
     Default: t3.medium
+  AvailabilityZone:
+    Description: Zona de disponibilidad para la instancia
+    Type: String
+    Default: us-east-1a
+    AllowedValues:
+      - us-east-1a
+      - us-east-1b
+      - us-east-1c
+      - us-east-1d
+      - us-east-1f
 
 Resources:
   # VPC
@@ -23,13 +33,14 @@ Resources:
         - Key: Name
           Value: InventarioVPC
 
-  # Subnet
+  # Subnet - AHORA CON ZONA ESPECÍFICA
   InventarioSubnet:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref InventarioVPC
       CidrBlock: 10.0.1.0/24
       MapPublicIpOnLaunch: true
+      AvailabilityZone: !Ref AvailabilityZone  # AGREGADO
       Tags:
         - Key: Name
           Value: InventarioSubnet
@@ -119,7 +130,7 @@ Resources:
       Roles:
         - !Ref InventarioEC2Role
 
-  # EC2 Instance
+  # EC2 Instance - AHORA CON ZONA EXPLÍCITA
   InventarioEC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -130,6 +141,7 @@ Resources:
         - !Ref InventarioSG
       IamInstanceProfile: !Ref InventarioInstanceProfile
       ImageId: ami-08a6efd148b1f7504
+      AvailabilityZone: !Ref AvailabilityZone  # AGREGADO EXPLÍCITAMENTE
       Tags:
         - Key: Name
           Value: InventarioEC2
@@ -166,3 +178,6 @@ Outputs:
   ElasticIP:
     Description: Elastic IP de la instancia
     Value: !Ref InventarioEIP
+  AvailabilityZone:
+    Description: Zona de disponibilidad utilizada
+    Value: !Ref AvailabilityZone
