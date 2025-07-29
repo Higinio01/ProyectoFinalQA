@@ -41,9 +41,6 @@ services:
     container_name: spring-inventario
     ports:
       - "${SERVER_PORT:-8080}:8080"
-    #    depends_on:
-    #      db:
-    #        condition: service_healthy
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -60,8 +57,7 @@ services:
       PARTNER_API_TIMEOUT: 5000
       PAYMENT_API_URL: "http://external-payment-gateway:8082"
       SPRING_PROFILES_ACTIVE: prod
-      restart: unless-stopped
-    command: [ "./wait-for-it.sh", "db:5432", "java", "-jar", "/app/app.jar" ]
+    command: [ "./wait-for-it.sh", "db:5432", "--", "java", "-jar", "/app/app.jar" ]
 
   mock-partner-api:
     image: wiremock/wiremock:2.35.0
