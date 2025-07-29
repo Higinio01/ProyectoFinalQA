@@ -33,19 +33,16 @@ public class AutenticacionController {
             final TokenResponse token = autenticacionService.login(loginRequest);
 
             log.info("Login exitoso para usuario: {}", loginRequest.email());
-            System.out.println("SE ACTUALIZOOOOOOOO Login exitoso para usuario: " + loginRequest.email());
+            System.out.println("ESTA VEZ SIII SE ACTUALIZOOOOOOOO Login exitoso para usuario: " + loginRequest.email());
             return ResponseEntity.ok(token);
 
         } catch (BadCredentialsException e) {
-            // Las credenciales inválidas se manejan en GlobalExceptionHandler
-            // pero podemos logear aquí también
             log.warn("Intento de login fallido para: {}", loginRequest.email());
-            throw e; // Re-lanzar para GlobalExceptionHandler
+            throw e;
 
         } catch (Exception e) {
-            // Otros errores inesperados
             log.error("Error inesperado en login endpoint para: {}", loginRequest.email(), e);
-            throw e; // Re-lanzar para GlobalExceptionHandler
+            throw e;
         }
     }
 
@@ -72,7 +69,7 @@ public class AutenticacionController {
 
         } catch (Exception e) {
             log.error("Error inesperado en /me endpoint", e);
-            throw e; // Re-lanzar para GlobalExceptionHandler
+            throw e;
         }
     }
 }
