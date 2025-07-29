@@ -2,10 +2,7 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: ["dev"]
-  pull_request:
-    branches: ["main"]
-    types: [closed]
+    branches: ["dev", "main"]
 
 permissions:
   contents: write
@@ -16,7 +13,7 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/dev'  # Solo correr en dev
+    if: github.ref == 'refs/heads/dev'
 
     services:
       db_test:
@@ -288,7 +285,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: [ stress-test ]
-    if: github.event.pull_request.merged == true && github.base_ref == 'main'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout code
