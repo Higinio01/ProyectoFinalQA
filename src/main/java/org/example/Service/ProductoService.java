@@ -12,6 +12,7 @@ import org.example.Request.StockUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -141,10 +142,10 @@ public class ProductoService {
     }
 
     public Page<Producto> obtenerProductosPaginados(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
         return productoRepository.findAll(pageable);
     }
+
 
     public Map<String, Object> obtenerMetricasDashboard() {
         List<Producto> productos = productoRepository.findAll();
