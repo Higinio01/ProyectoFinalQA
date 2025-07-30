@@ -1,0 +1,198 @@
+{
+  "id": null,
+  "title": "Sistema de Inventario - Dashboard Completo",
+  "tags": ["inventario", "productos", "spring-boot"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Estado General de la API",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"inventario-api\"}",
+          "legendFormat": "API Status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          },
+          "mappings": [
+            {"options": {"0": {"text": "🔴 DOWN"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 UP"}}, "type": "value"}
+          ]
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "Requests Totales/min",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m]) * 60",
+          "legendFormat": "Requests/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 100},
+              {"color": "red", "value": 500}
+            ]
+          },
+          "unit": "rpm"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "Tiempo Respuesta Promedio",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{uri=~\"/api/productos.*\"}[5m]) / rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m])",
+          "legendFormat": "Avg Response"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 0.5},
+              {"color": "red", "value": 2}
+            ]
+          },
+          "unit": "s",
+          "decimals": 3
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "id": 4,
+      "title": "Errores 5xx",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=~\"5..\"}[5m])) * 60",
+          "legendFormat": "Errors/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "unit": "rpm"
+        }
+      },
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "id": 5,
+      "title": "📊 Requests por Endpoint de Productos",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m]) * 60",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 5
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+    },
+    {
+      "id": 6,
+      "title": "💾 Uso de Memoria JVM",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "jvm_memory_used_bytes{area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Heap Used (MB)"
+        },
+        {
+          "expr": "jvm_memory_max_bytes{area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Heap Max (MB)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "MB",
+          "custom": {
+            "fillOpacity": 10
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12}
+    },
+    {
+      "id": 7,
+      "title": "🗄️ Conexiones a Base de Datos",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "Conexiones Activas"
+        },
+        {
+          "expr": "hikaricp_connections_idle",
+          "legendFormat": "Conexiones Idle"
+        },
+        {
+          "expr": "hikaricp_connections_max",
+          "legendFormat": "Conexiones Máximas"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 12}
+    },
+    {
+      "id": 8,
+      "title": "🧵 Threads JVM",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "jvm_threads_live_threads",
+          "legendFormat": "Threads Activos"
+        },
+        {
+          "expr": "jvm_threads_daemon_threads",
+          "legendFormat": "Threads Daemon"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12}
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}

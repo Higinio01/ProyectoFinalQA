@@ -1,0 +1,186 @@
+{
+  "id": null,
+  "title": "📦 Gestión de Stock - Sistema de Inventario",
+  "tags": ["inventario", "stock", "productos"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "🚨 API Status",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "up{job=\"inventario-api\"}",
+          "legendFormat": "API Status"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "red", "value": 0},
+              {"color": "green", "value": 1}
+            ]
+          },
+          "mappings": [
+            {"options": {"0": {"text": "🔴 DOWN"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 UP"}}, "type": "value"}
+          ]
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "📈 Productos Creados (Últimas 24h)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(http_server_requests_seconds_count{method=\"POST\", uri=~\"/api/productos\"}[24h])",
+          "legendFormat": "Nuevos Productos"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "🔄 Actualizaciones de Stock (Últimas 24h)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(http_server_requests_seconds_count{method=\"PUT\", uri=~\"/api/productos/.*/stock\"}[24h])",
+          "legendFormat": "Actualizaciones"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "palette-classic"},
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "id": 4,
+      "title": "🗑️ Productos Eliminados (Últimas 24h)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "increase(http_server_requests_seconds_count{method=\"DELETE\", uri=~\"/api/productos/.*\"}[24h])",
+          "legendFormat": "Eliminados"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 5},
+              {"color": "red", "value": 20}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "id": 5,
+      "title": "📊 Requests POST a Productos (Creación)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{method=\"POST\", uri=~\"/api/productos\"}[5m]) * 60",
+          "legendFormat": "POST {{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "custom": {
+            "drawStyle": "line",
+            "pointSize": 5
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+    },
+    {
+      "id": 6,
+      "title": "🔄 Requests PUT/DELETE (Modificaciones)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{method=\"PUT\", uri=~\"/api/productos.*\"}[5m]) * 60",
+          "legendFormat": "PUT {{uri}}"
+        },
+        {
+          "expr": "rate(http_server_requests_seconds_count{method=\"DELETE\", uri=~\"/api/productos.*\"}[5m]) * 60",
+          "legendFormat": "DELETE {{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
+    },
+    {
+      "id": 7,
+      "title": "⏱️ Tiempo de Respuesta por Endpoint",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_sum{uri=~\"/api/productos.*\"}[5m]) / rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m])",
+          "legendFormat": "{{method}} {{uri}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
+    },
+    {
+      "id": 8,
+      "title": "🔍 Códigos de Estado HTTP",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=\"200\"}[5m]) * 60",
+          "legendFormat": "200 OK"
+        },
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=\"404\"}[5m]) * 60",
+          "legendFormat": "404 Not Found"
+        },
+        {
+          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=~\"5..\"}[5m]) * 60",
+          "legendFormat": "5xx Errors"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+    }
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "refresh": "1m"
+}

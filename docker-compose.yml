@@ -83,7 +83,7 @@ services:
       - testing
 
   vue-app:
-    image: smct0001/vue-app:latest
+    image: smct0001/vue-app:prueba
     container_name: vue-frontend
     ports:
       - "3000:80"
@@ -91,7 +91,7 @@ services:
     depends_on:
       - app
     environment:
-      - VUE_APP_API_URL=http://app:8080/api
+      - VUE_APP_API_URL=http://localhost:8080/api
 
   # Prometheus
   prometheus:

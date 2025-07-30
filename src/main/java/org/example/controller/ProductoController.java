@@ -116,5 +116,4 @@ public class ProductoController {
         List<Producto> productosBajoStock = inventarioService.obtenerProductosConStockBajo();
         return ResponseEntity.ok(productosBajoStock.stream().map(producto -> modelMapper.map(producto, ProductoDto.class)).toList());
     }
-
 }
