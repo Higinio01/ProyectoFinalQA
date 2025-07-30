@@ -1,0 +1,181 @@
+{
+  "id": null,
+  "title": "🚨 Errores y Alertas del Sistema",
+  "tags": ["errores", "alertas", "monitoreo"],
+  "timezone": "browser",
+  "panels": [
+    {
+      "id": 1,
+      "title": "🔴 Errores Críticos (5xx) - Últimos 15min",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{status=~\"5..\"}[15m]))",
+          "legendFormat": "Errores 5xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
+    },
+    {
+      "id": 2,
+      "title": "⚠️ Errores Cliente (4xx) - Últimos 15min",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{status=~\"4..\"}[15m]))",
+          "legendFormat": "Errores 4xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 10},
+              {"color": "red", "value": 50}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
+    },
+    {
+      "id": 3,
+      "title": "⏱️ Requests Lentos (>2s)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "sum(increase(http_server_requests_seconds_count{le=\"+Inf\"} - http_server_requests_seconds_count{le=\"2.0\"}[15m]))",
+          "legendFormat": "Requests > 2s"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 5},
+              {"color": "red", "value": 20}
+            ]
+          },
+          "unit": "short"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "id": 4,
+      "title": "💥 Rate de Errores (%)",
+      "type": "stat",
+      "targets": [
+        {
+          "expr": "(sum(rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m]))) * 100",
+          "legendFormat": "Error Rate %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "thresholds": {
+            "steps": [
+              {"color": "green", "value": 0},
+              {"color": "yellow", "value": 1},
+              {"color": "red", "value": 5}
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "id": 5,
+      "title": "📈 Tendencia de Errores por Tiempo",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(http_server_requests_seconds_count{status=~\"5..\"}[5m]) * 60",
+          "legendFormat": "Errores 5xx/min"
+        },
+        {
+          "expr": "rate(http_server_requests_seconds_count{status=~\"4..\"}[5m]) * 60",
+          "legendFormat": "Errores 4xx/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
+    },
+    {
+      "id": 6,
+      "title": "🔍 Top Endpoints con Errores",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (uri, status) (rate(http_server_requests_seconds_count{status=~\"[45]..\"}[5m])))",
+          "legendFormat": "{{uri}} - {{status}}",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps"
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
+    },
+    {
+      "id": 7,
+      "title": "⚡ Latencia por Percentiles",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P50"
+        },
+        {
+          "expr": "histogram_quantile(0.90, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P90"
+        },
+        {
+          "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        }
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "refresh": "30s"
+}
