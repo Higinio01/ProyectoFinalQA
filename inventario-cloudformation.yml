@@ -5,7 +5,7 @@ Parameters:
   KeyName:
     Description: Nombre de la clave SSH para acceder a EC2
     Type: AWS::EC2::KeyPair::KeyName
-    Default: edusync-key
+    Default: inventario-key
   InstanceType:
     Description: Tipo de instancia EC2
     Type: String
