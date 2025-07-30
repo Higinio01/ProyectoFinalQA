@@ -1,0 +1,19 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'inventario-api'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['app:8080']
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
