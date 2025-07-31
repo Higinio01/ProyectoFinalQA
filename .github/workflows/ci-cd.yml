@@ -309,34 +309,37 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            
-              if [ -d "app" ]; then
-                cd app
-                git fetch origin main
-                git reset --hard origin/main
-              else
-                git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git app
-                cd app
-              fi
-              
-              docker-compose -f docker-compose.yml pull app
-              
-              docker rm -f spring-inventario 2>/dev/null || true
-              
-              docker-compose -f docker-compose.yml up -d app
-              
-              docker container prune -f
-              
-              sleep 30
-              
-              # Verificar que esté arriba
-              if docker-compose -f docker-compose.yml ps app | grep -q "Up"; then
-                echo "✅ App updated and running successfully"
-              else
-                echo "❌ Error: App did not start correctly"
-                docker-compose -f docker-compose.yml ps
-                exit 1
-              fi
+
+            # Configurar Git como seguro
+            git config --global --add safe.directory /home/ec2-user/app
+
+            if [ -d "app" ]; then
+              cd app
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git app
+              cd app
+            fi
+
+            docker-compose -f docker-compose.yml pull app
+
+            docker rm -f spring-inventario 2>/dev/null || true
+
+            docker-compose -f docker-compose.yml up -d app
+
+            docker container prune -f
+
+            sleep 30
+
+            # Verificar que esté arriba
+            if docker-compose -f docker-compose.yml ps app | grep -q "Up"; then
+              echo "✅ App updated and running successfully"
+            else
+              echo "❌ Error: App did not start correctly"
+              docker-compose -f docker-compose.yml ps
+              exit 1
+            fi
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -350,7 +353,10 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            
+
+            # Configurar Git como seguro
+            git config --global --add safe.directory /home/ec2-user/app
+
             if [ -d "app" ]; then
               cd app
               git fetch origin main
@@ -359,17 +365,17 @@ jobs:
               git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git app
               cd app
             fi
-            
+
             docker-compose -f docker-compose.yml pull vue-app
-            
+
             docker rm -f vue-frontend 2>/dev/null || true
-            
+
             docker-compose -f docker-compose.yml up -d vue-app
-            
+
             docker container prune -f
 
             sleep 15
-            
+
             if docker-compose -f docker-compose.yml ps vue-app | grep -q "Up"; then
               echo "✅ Vue-frontend updated and running successfully"
             else
