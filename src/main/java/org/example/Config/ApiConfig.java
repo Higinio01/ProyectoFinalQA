@@ -1,4 +1,4 @@
-package org.example.config;
+package org.example.Config;
 
 import lombok.Getter;
 import lombok.Setter;

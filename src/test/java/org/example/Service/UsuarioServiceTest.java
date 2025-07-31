@@ -10,9 +10,11 @@ import org.example.Security.jwt.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
@@ -197,7 +199,8 @@ public class UsuarioServiceTest {
 
         when(usuarioRepository.findAll(any(Pageable.class))).thenReturn(paginaMock);
 
-        Page<Usuario> resultado = usuarioService.obtenerUsuariosPaginados(0, 10);
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("id").ascending());
+        Page<Usuario> resultado = usuarioService.obtenerUsuariosPaginados(pageable);
 
         assertEquals(paginaMock, resultado);
 

@@ -1,4 +1,4 @@
-package org.example.controller;
+package org.example.Controller;
 
 import org.example.Dtos.RolDto;
 import org.example.Entity.Rol;

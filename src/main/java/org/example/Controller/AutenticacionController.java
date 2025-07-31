@@ -1,4 +1,4 @@
-package org.example.controller;
+package org.example.Controller;
 
 import org.example.Repository.UsuarioRepository;
 import org.example.Request.LoginRequest;

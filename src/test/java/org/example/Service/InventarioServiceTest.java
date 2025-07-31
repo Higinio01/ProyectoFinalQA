@@ -10,7 +10,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -122,13 +124,18 @@ public class InventarioServiceTest {
     void obtenerMovimientosConFiltros_devuelvePaginado() {
         @SuppressWarnings("unchecked")
         Page<MovimientoInventario> paginaMock = mock(Page.class);
-        when(movimientoRepo.findMovimientosConFiltros(any(), any(), any(), any(), any(), any()))
+
+        when(movimientoRepo.findAll(any(Specification.class), any(Pageable.class)))
                 .thenReturn(paginaMock);
 
-        Page<MovimientoInventario> result = inventarioService.obtenerMovimientosConFiltros(
-                1L, "ENTRADA", "admin", LocalDateTime.now().minusDays(1), LocalDateTime.now(), 0, 10);
+        String tipo = "ENTRADA";
+        String fecha = "2025-07-30";
+        Pageable pageable = PageRequest.of(0, 10);
+
+        Page<MovimientoInventario> result = inventarioService.obtenerHistorialDeMovimientos(tipo, fecha, pageable);
 
         assertEquals(paginaMock, result);
+        verify(movimientoRepo).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test

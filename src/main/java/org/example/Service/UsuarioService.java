@@ -121,8 +121,7 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
     }
 
-    public Page<Usuario> obtenerUsuariosPaginados(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+    public Page<Usuario> obtenerUsuariosPaginados(Pageable pageable) {
         return usuarioRepository.findAll(pageable);
     }
 }
