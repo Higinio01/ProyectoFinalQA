@@ -15,7 +15,6 @@ import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.time.LocalDateTime;
@@ -25,7 +24,7 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class); // ⭐ AGREGAR
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(UsuarioException.NoEncontrado.class)
     public ResponseEntity<Object> handleUsuarioNoEncontrado(UsuarioException.NoEncontrado ex, HttpServletRequest request) {
@@ -87,14 +86,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, "No tiene permisos para acceder a este recurso", request.getRequestURI());
     }
 
-    // ========== HANDLER GENERAL (mantener al final) ==========
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGeneralException(Exception ex, HttpServletRequest request) {
         log.error("Error interno no controlado en {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Ha ocurrido un error interno", request.getRequestURI());
     }
 
-    // ========== MÉTODO HELPER (mantener igual) ==========
     private ResponseEntity<Object> buildResponse(HttpStatus status, String message, String path) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now());

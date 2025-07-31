@@ -40,7 +40,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final TokenValidationCache tokenValidationCache;
     private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);
 
-    // Eliminar UsuarioRepository ya que no se está usando
     public JwtAuthFilter(JwtService jwtService, UserDetailsService userDetailsService, ApiTokenRepository apiTokenRepository, TokenValidationCache tokenValidationCache) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;

@@ -26,18 +26,9 @@ public class UsuarioController {
         this.modelMapper = modelMapper;
     }
 
-//    @GetMapping
-//    public ResponseEntity<Page<UsuarioDto>> obtenerTodos(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size
-//    ) {
-//        Page<Usuario> usuariosPage = usuarioService.obtenerUsuariosPaginados(page, size);
-//        return ResponseEntity.ok(usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class)));
-//    }
-
     @GetMapping
     public ResponseEntity<Page<UsuarioDto>> obtenerTodos(
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable
+            @PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable
     ) {
         Page<Usuario> usuariosPage = usuarioService.obtenerUsuariosPaginados(pageable);
         return ResponseEntity.ok(usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class)));

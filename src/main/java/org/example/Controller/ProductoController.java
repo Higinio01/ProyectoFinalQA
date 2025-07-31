@@ -34,18 +34,9 @@ public class ProductoController {
         this.modelMapper = modelMapper;
     }
 
-//    @GetMapping
-//    public ResponseEntity<Page<ProductoDto>> listarProductos(
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size) {
-//
-//        Page<Producto> productos = productoService.obtenerProductosPaginados(page, size);
-//        return ResponseEntity.ok(productos.map(producto -> modelMapper.map(producto, ProductoDto.class)));
-//    }
-
     @GetMapping
     public ResponseEntity<Page<ProductoDto>> listarProductos(
-            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         Page<Producto> productos = productoService.obtenerProductosPaginados(pageable);
         return ResponseEntity.ok(productos.map(producto -> modelMapper.map(producto, ProductoDto.class)));
@@ -57,24 +48,6 @@ public class ProductoController {
         ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
         return ResponseEntity.ok(dto);
     }
-
-//    @GetMapping("/filtro")
-//    public ResponseEntity<Page<ProductoDto>> listarProductosFiltrados(
-//            @RequestParam(required = false) String nombre,
-//            @RequestParam(required = false) String categoria,
-//            @RequestParam(required = false) Double precioMin,
-//            @RequestParam(required = false) Double precioMax,
-//            @RequestParam(required = false) String busqueda,
-//            @RequestParam(defaultValue = "0") int page,
-//            @RequestParam(defaultValue = "10") int size) {
-//
-//        Pageable pageable = PageRequest.of(page, size);
-//        Page<Producto> productos = productoService.buscarProductos(nombre, categoria, precioMin, precioMax, busqueda, pageable);
-//        Page<ProductoDto> dtoPage = productos.map(p -> new ProductoDto(p.getId(),p.getNombre(),p.getDescripcion(), p.getCategoria(), p.getPrecio(), p.getCantidad(), p.getMinimoStock()));
-//
-//        return ResponseEntity.ok(dtoPage);
-//    }
-
     @GetMapping("/filtro")
     public ResponseEntity<Page<ProductoDto>> listarProductosFiltrados(
             @RequestParam(required = false) String nombre,

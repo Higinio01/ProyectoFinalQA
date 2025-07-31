@@ -11,7 +11,6 @@ import org.example.Exception.JwtGenerationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -83,57 +82,12 @@ public class JwtService {
         }
     }
 
-    private Date extractExpiration(final String token) {
-        try {
-            return extractClaim(token, Claims::getExpiration);
-        } catch (JwtException e) {
-            log.warn("Error al extraer fecha de expiración del token", e);
-            throw new InvalidTokenException("No se pudo verificar expiración del token", e);
-        }
-    }
-
-    private boolean isTokenExpired(final String token) {
-        try {
-            Date expiration = extractExpiration(token);
-            return expiration.before(new Date());
-        } catch (Exception e) {
-            log.warn("Error al verificar expiración del token", e);
-            return true; // Considerar expirado si hay error
-        }
-    }
-
-    public boolean isTokenValid(final String token, final UserDetails userDetails) {
-        try {
-            final String username = extractUsername(token);
-            return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-        } catch (ExpiredJwtException e) {
-            log.debug("Token expirado para usuario: {}", userDetails.getUsername());
-            return false;
-        } catch (JwtException e) {
-            log.debug("Token inválido para usuario: {}", userDetails.getUsername());
-            return false;
-        }
-    }
-
-    public boolean isTokenValid(final String token, final Usuario usuario) {
-        try {
-            final String userEmail = extractUsername(token);
-            return (userEmail.equals(usuario.getEmail()) && !isTokenExpired(token));
-        } catch (ExpiredJwtException e) {
-            log.debug("Token expirado para usuario: {}", usuario.getEmail());
-            return false;
-        } catch (JwtException e) {
-            log.debug("Token inválido para usuario: {}", usuario.getEmail());
-            return false;
-        }
-    }
-
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         try {
             Claims claims = extractAllClaims(token);
             return claimsResolver.apply(claims);
         } catch (ExpiredJwtException e) {
-            throw e; // Re-lanzar para manejo específico
+            throw e;
         } catch (JwtException e) {
             log.warn("Error al extraer claim del token", e);
             throw new InvalidTokenException("No se pudo extraer información del token", e);

@@ -14,8 +14,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,14 +96,14 @@ public class InventarioService {
         return movimientoInventarioRepository.findByProductoIdOrderByFechaMovimientoDesc(productoId);
     }
 
-    public Page<MovimientoInventario> obtenerMovimientosConFiltros(
-            Long productoId, String tipoMovimiento, String usuarioResponsable,
-            LocalDateTime fechaInicio, LocalDateTime fechaFin, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        return movimientoInventarioRepository.findMovimientosConFiltros(
-                productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, pageable);
-    }
+//    public Page<MovimientoInventario> obtenerMovimientosConFiltros(
+//            Long productoId, String tipoMovimiento, String usuarioResponsable,
+//            LocalDateTime fechaInicio, LocalDateTime fechaFin, int page, int size) {
+//
+//        Pageable pageable = PageRequest.of(page, size);
+//        return movimientoInventarioRepository.findMovimientosConFiltros(
+//                productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, pageable);
+//    }
 
     public List<MovimientoInventario> obtenerMovimientosPorTipo(String tipoMovimiento) {
         return movimientoInventarioRepository.findByTipoMovimientoOrderByFechaMovimientoDesc(tipoMovimiento.toUpperCase());

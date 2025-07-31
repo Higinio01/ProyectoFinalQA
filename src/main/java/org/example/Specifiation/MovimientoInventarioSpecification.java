@@ -15,7 +15,6 @@ public class MovimientoInventarioSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Filtro por tipo
             if (tipo != null && !tipo.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.equal(
                         criteriaBuilder.upper(root.get("tipoMovimiento")),
@@ -23,7 +22,6 @@ public class MovimientoInventarioSpecification {
                 ));
             }
 
-            // Filtro por fecha
             if (fecha != null && !fecha.trim().isEmpty()) {
                 LocalDate parsedDate = LocalDate.parse(fecha);
                 LocalDateTime inicioDelDia = parsedDate.atStartOfDay();

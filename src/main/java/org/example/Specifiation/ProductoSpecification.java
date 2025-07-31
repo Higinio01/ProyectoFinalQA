@@ -14,7 +14,6 @@ public class ProductoSpecification {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            // Filtro por nombre
             if (nombre != null && !nombre.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.like(
                         criteriaBuilder.lower(root.get("nombre")),
@@ -22,22 +21,18 @@ public class ProductoSpecification {
                 ));
             }
 
-            // Filtro por categoría
             if (categoria != null && !categoria.trim().isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("categoria"), categoria));
             }
 
-            // Filtro por precio mínimo
             if (precioMin != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("precio"), precioMin));
             }
 
-            // Filtro por precio máximo
             if (precioMax != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("precio"), precioMax));
             }
 
-            // Búsqueda general (nombre, descripción, categoría)
             if (busqueda != null && !busqueda.trim().isEmpty()) {
                 String searchPattern = "%" + busqueda.toLowerCase() + "%";
                 Predicate nombrePredicate = criteriaBuilder.like(
