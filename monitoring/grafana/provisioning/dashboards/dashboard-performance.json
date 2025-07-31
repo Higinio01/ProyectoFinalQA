@@ -83,7 +83,7 @@
     },
     {
       "id": 6,
-      "title": "⚡ Distribution de Response Time",
+      "title": "Distribution de Response Time",
       "type": "heatmap",
       "targets": [
         {
