@@ -10,6 +10,8 @@ import org.example.Service.ProductoService;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +44,9 @@ public class ProductoController {
 //    }
 
     @GetMapping
-    public ResponseEntity<Page<ProductoDto>> listarProductos(Pageable pageable) {
+    public ResponseEntity<Page<ProductoDto>> listarProductos(
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
         Page<Producto> productos = productoService.obtenerProductosPaginados(pageable);
         return ResponseEntity.ok(productos.map(producto -> modelMapper.map(producto, ProductoDto.class)));
     }

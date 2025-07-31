@@ -10,8 +10,8 @@ import org.example.Repository.MovimientoInventarioRepository;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Request.StockUpdateRequest;
-import org.example.Metrics.Counted;
-import org.example.Metrics.Timed;
+import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.annotation.Timed;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
