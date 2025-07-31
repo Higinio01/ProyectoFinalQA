@@ -5,17 +5,17 @@ import org.example.Entity.Categoria;
 import org.example.Entity.MovimientoInventario;
 import org.example.Entity.Producto;
 import org.example.Exception.ProductoException;
+import org.example.Specifiation.ProductoSpecification;
 import org.example.Repository.MovimientoInventarioRepository;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.ProductoRequest;
 import org.example.Request.StockUpdateRequest;
-import org.example.Metrics.Counted;
-import org.example.Metrics.Timed;
+import io.micrometer.core.annotation.Counted;
+import io.micrometer.core.annotation.Timed;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,17 +92,25 @@ public class ProductoService {
 
     @Timed(value = "inventario_busqueda_filtrada_tiempo", description = "Tiempo de búsqueda filtrada")
     public Page<Producto> buscarProductos(String nombre, String categoria, Double precioMin,
-                                          Double precioMax, String buscador, Pageable pageable) {
-        return productoRepository.buscarConFiltros(nombre, categoria, precioMin, precioMax, buscador, pageable);
+                                          Double precioMax, String busqueda, Pageable pageable) {
+
+        Specification<Producto> spec = ProductoSpecification.conFiltros(
+                nombre, categoria, precioMin, precioMax, busqueda);
+
+        return productoRepository.findAll(spec, pageable);
     }
 
+//    @Timed(value = "inventario_productos_paginados_tiempo", description = "Tiempo de consulta paginada")
+//    public Page<Producto> obtenerProductosPaginados(int page, int size) {
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+//        return productoRepository.findAll(pageable);
+//    }
+
     @Timed(value = "inventario_productos_paginados_tiempo", description = "Tiempo de consulta paginada")
-    public Page<Producto> obtenerProductosPaginados(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+    public Page<Producto> obtenerProductosPaginados(Pageable pageable) {
         return productoRepository.findAll(pageable);
     }
 
-    // === MÉTODOS PRIVADOS (SIN CAMBIOS) ===
     @NotNull
     private Producto getProducto(ProductoRequest request, Producto productoExistente) {
         productoExistente.setNombre(request.nombre());

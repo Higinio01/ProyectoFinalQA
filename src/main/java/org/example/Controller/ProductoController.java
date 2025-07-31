@@ -1,4 +1,4 @@
-package org.example.controller;
+package org.example.Controller;
 
 import org.example.Dtos.ProductoDto;
 import org.example.Entity.Categoria;
@@ -9,8 +9,9 @@ import org.example.Service.InventarioService;
 import org.example.Service.ProductoService;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,10 +36,9 @@ public class ProductoController {
 
     @GetMapping
     public ResponseEntity<Page<ProductoDto>> listarProductos(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Page<Producto> productos = productoService.obtenerProductosPaginados(page, size);
+            @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<Producto> productos = productoService.obtenerProductosPaginados(pageable);
         return ResponseEntity.ok(productos.map(producto -> modelMapper.map(producto, ProductoDto.class)));
     }
 
@@ -48,7 +48,6 @@ public class ProductoController {
         ProductoDto dto = modelMapper.map(producto, ProductoDto.class);
         return ResponseEntity.ok(dto);
     }
-
     @GetMapping("/filtro")
     public ResponseEntity<Page<ProductoDto>> listarProductosFiltrados(
             @RequestParam(required = false) String nombre,
@@ -56,12 +55,13 @@ public class ProductoController {
             @RequestParam(required = false) Double precioMin,
             @RequestParam(required = false) Double precioMax,
             @RequestParam(required = false) String busqueda,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Producto> productos = productoService.buscarProductos(nombre, categoria, precioMin, precioMax, busqueda, pageable);
-        Page<ProductoDto> dtoPage = productos.map(p -> new ProductoDto(p.getId(),p.getNombre(),p.getDescripcion(), p.getCategoria(), p.getPrecio(), p.getCantidad(), p.getMinimoStock()));
+        Page<Producto> productos = productoService.buscarProductos(
+                nombre, categoria, precioMin, precioMax, busqueda, pageable);
+
+        Page<ProductoDto> dtoPage = productos.map(producto ->
+                modelMapper.map(producto, ProductoDto.class));
 
         return ResponseEntity.ok(dtoPage);
     }

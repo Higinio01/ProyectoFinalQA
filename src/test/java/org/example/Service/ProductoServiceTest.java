@@ -9,8 +9,11 @@ import org.example.Request.StockUpdateRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Optional;
 import java.util.List;
@@ -128,8 +131,8 @@ public class ProductoServiceTest {
 
         productoService.eliminarProducto(1L);
 
-        verify(movimientoInventarioRepository).deleteByProductoId(1L); // ✅ nueva verificación
-        verify(productoRepository).delete(producto); // ya estaba
+        verify(movimientoInventarioRepository).deleteByProductoId(1L);
+        verify(productoRepository).delete(producto);
     }
 
 
@@ -170,20 +173,24 @@ public class ProductoServiceTest {
         Page<Producto> paginaMock = mock(Page.class);
         when(productoRepository.findAll(any(Pageable.class))).thenReturn(paginaMock);
 
-        Page<Producto> resultado = productoService.obtenerProductosPaginados(0, 5);
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<Producto> resultado = productoService.obtenerProductosPaginados(pageable);
 
         assertEquals(paginaMock, resultado);
+        verify(productoRepository).findAll(pageable);
     }
 
     @Test
     void buscarProductos_devuelveResultados() {
         @SuppressWarnings("unchecked")
         Page<Producto> paginaMock = mock(Page.class);
-        when(productoRepository.buscarConFiltros(anyString(), anyString(), any(), any(), anyString(), any()))
+
+        when(productoRepository.findAll(ArgumentMatchers.<Specification<Producto>>any(), any(Pageable.class)))
                 .thenReturn(paginaMock);
 
         Page<Producto> resultado = productoService.buscarProductos("Mouse", "ELECTRONICA", 10.0, 50.0, "", Pageable.unpaged());
 
         assertEquals(paginaMock, resultado);
+        verify(productoRepository).findAll(ArgumentMatchers.<Specification<Producto>>any(), any(Pageable.class));
     }
 }

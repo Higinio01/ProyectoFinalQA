@@ -6,14 +6,14 @@ import org.example.Exception.ProductoException;
 import org.example.Repository.MovimientoInventarioRepository;
 import org.example.Repository.ProductoRepository;
 import org.example.Request.StockUpdateRequest;
+import org.example.Specifiation.MovimientoInventarioSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,37 +80,14 @@ public class InventarioService {
         return movimientoInventarioRepository.findAllByOrderByFechaMovimientoDesc(pageable);
     }
 
-    public Page<MovimientoInventario> obtenerHistorialDeMovimientos(int page, int size, String tipo, String fecha) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<MovimientoInventario> obtenerHistorialDeMovimientos(String tipo, String fecha, Pageable pageable) {
 
         if ((tipo == null || tipo.isBlank()) && (fecha == null || fecha.isBlank())) {
             return movimientoInventarioRepository.findAll(pageable);
         }
 
-        if (tipo != null && !tipo.isBlank() && fecha != null && !fecha.isBlank()) {
-            LocalDate parsedDate = LocalDate.parse(fecha);
-            return movimientoInventarioRepository.findByTipoMovimientoAndFechaMovimientoBetween(
-                    tipo.toUpperCase(),
-                    parsedDate.atStartOfDay(),
-                    parsedDate.plusDays(1).atStartOfDay(),
-                    pageable
-            );
-        }
-
-        if (tipo != null && !tipo.isBlank()) {
-            return movimientoInventarioRepository.findByTipoMovimientoIgnoreCase(tipo, pageable);
-        }
-
-        if (fecha != null && !fecha.isBlank()) {
-            LocalDate parsedDate = LocalDate.parse(fecha);
-            return movimientoInventarioRepository.findByFechaMovimientoBetween(
-                    parsedDate.atStartOfDay(),
-                    parsedDate.plusDays(1).atStartOfDay(),
-                    pageable
-            );
-        }
-
-        return movimientoInventarioRepository.findAllByOrderByFechaMovimientoDesc(pageable);
+        Specification<MovimientoInventario> spec = MovimientoInventarioSpecification.conFiltros(tipo, fecha);
+        return movimientoInventarioRepository.findAll(spec, pageable);
     }
 
 
@@ -119,14 +96,14 @@ public class InventarioService {
         return movimientoInventarioRepository.findByProductoIdOrderByFechaMovimientoDesc(productoId);
     }
 
-    public Page<MovimientoInventario> obtenerMovimientosConFiltros(
-            Long productoId, String tipoMovimiento, String usuarioResponsable,
-            LocalDateTime fechaInicio, LocalDateTime fechaFin, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        return movimientoInventarioRepository.findMovimientosConFiltros(
-                productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, pageable);
-    }
+//    public Page<MovimientoInventario> obtenerMovimientosConFiltros(
+//            Long productoId, String tipoMovimiento, String usuarioResponsable,
+//            LocalDateTime fechaInicio, LocalDateTime fechaFin, int page, int size) {
+//
+//        Pageable pageable = PageRequest.of(page, size);
+//        return movimientoInventarioRepository.findMovimientosConFiltros(
+//                productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, pageable);
+//    }
 
     public List<MovimientoInventario> obtenerMovimientosPorTipo(String tipoMovimiento) {
         return movimientoInventarioRepository.findByTipoMovimientoOrderByFechaMovimientoDesc(tipoMovimiento.toUpperCase());

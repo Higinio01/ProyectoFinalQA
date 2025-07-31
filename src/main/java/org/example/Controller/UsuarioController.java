@@ -1,4 +1,4 @@
-package org.example.controller;
+package org.example.Controller;
 
 import org.example.Dtos.UsuarioDto;
 import org.example.Entity.EstadoUsuario;
@@ -8,6 +8,9 @@ import org.example.Service.UsuarioService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,10 +28,9 @@ public class UsuarioController {
 
     @GetMapping
     public ResponseEntity<Page<UsuarioDto>> obtenerTodos(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @PageableDefault(sort = "id", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        Page<Usuario> usuariosPage = usuarioService.obtenerUsuariosPaginados(page, size);
+        Page<Usuario> usuariosPage = usuarioService.obtenerUsuariosPaginados(pageable);
         return ResponseEntity.ok(usuariosPage.map(usuario -> modelMapper.map(usuario, UsuarioDto.class)));
     }
 

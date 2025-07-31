@@ -1,4 +1,4 @@
-package org.example.controller;
+package org.example.Controller;
 
 import org.example.Security.jwt.TokenValidationCache;
 import org.springframework.http.ResponseEntity;

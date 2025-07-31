@@ -12,9 +12,7 @@ import org.example.Repository.UsuarioRepository;
 import org.example.Request.UsuarioRequest;
 import org.example.Security.jwt.JwtService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -121,8 +119,7 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
     }
 
-    public Page<Usuario> obtenerUsuariosPaginados(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+    public Page<Usuario> obtenerUsuariosPaginados(Pageable pageable) {
         return usuarioRepository.findAll(pageable);
     }
 }
