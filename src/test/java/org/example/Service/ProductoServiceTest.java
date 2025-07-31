@@ -131,8 +131,8 @@ public class ProductoServiceTest {
 
         productoService.eliminarProducto(1L);
 
-        verify(movimientoInventarioRepository).deleteByProductoId(1L); // ✅ nueva verificación
-        verify(productoRepository).delete(producto); // ya estaba
+        verify(movimientoInventarioRepository).deleteByProductoId(1L);
+        verify(productoRepository).delete(producto);
     }
 
 
