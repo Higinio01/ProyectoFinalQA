@@ -6,7 +6,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "🟢 Estado de la API de Inventario",
+      "title": "Estado de la API de Inventario",
       "type": "stat",
       "targets": [
         {

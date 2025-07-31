@@ -6,7 +6,7 @@
   "panels": [
     {
       "id": 1,
-      "title": "🟢 Estado de Servicios",
+      "title": "Estado de Servicios",
       "type": "stat",
       "targets": [
         {
@@ -45,7 +45,7 @@
     },
     {
       "id": 2,
-      "title": "💾 Uso de Memoria JVM (%)",
+      "title": "Uso de Memoria JVM (%)",
       "type": "gauge",
       "targets": [
         {
