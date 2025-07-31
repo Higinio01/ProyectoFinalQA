@@ -314,6 +314,8 @@ jobs:
             git config --global --add safe.directory /home/ec2-user/app
 
             if [ -d "app" ]; then
+              # Cambiar propietario del directorio a ec2-user
+              sudo chown -R ec2-user:ec2-user app
               cd app
               git fetch origin main
               git reset --hard origin/main
@@ -358,6 +360,8 @@ jobs:
             git config --global --add safe.directory /home/ec2-user/app
 
             if [ -d "app" ]; then
+              # Cambiar propietario del directorio a ec2-user
+              sudo chown -R ec2-user:ec2-user app
               cd app
               git fetch origin main
               git reset --hard origin/main
