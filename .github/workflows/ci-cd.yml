@@ -326,7 +326,7 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Deploy Frontend to EC2
         uses: appleboy/ssh-action@v0.1.10
@@ -337,9 +337,15 @@ jobs:
           script: |
             cd ProyectoFinalQA
             echo "Actualizando solo imagen del frontend..."
+
+            # Detener solo el contenedor del frontend
+            docker-compose stop vue-app
+            docker-compose rm -f vue-app
+
+            # Descargar nueva imagen y levantar
             docker-compose pull vue-app
             docker-compose up -d vue-app
-            
+
             # Verificar que el frontend esté corriendo
             if docker-compose ps vue-app | grep -q "Up"; then
               echo "Frontend actualizado exitosamente"
