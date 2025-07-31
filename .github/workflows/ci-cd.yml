@@ -308,21 +308,35 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ProyectoFinalQA || git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git ProyectoFinalQA && cd ProyectoFinalQA
+            set -e
             
-            git pull origin main
-            docker-compose pull app db
-            docker-compose up -d db
-            
-            # Esperar BD
-            for i in {1..30}; do
-              if docker-compose exec -T db pg_isready -U postgres 2>/dev/null; then
-                break
+              if [ -d "app" ]; then
+                cd app
+                git fetch origin main
+                git reset --hard origin/main
+              else
+                git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git app
+                cd app
               fi
-              sleep 10
-            done
-            
-            docker-compose up -d app
+              
+              docker-compose -f docker-compose.yml pull app
+              
+              docker rm -f spring-inventario 2>/dev/null || true
+              
+              docker-compose -f docker-compose.yml up -d app
+              
+              docker container prune -f
+              
+              sleep 30
+              
+              # Verificar que esté arriba
+              if docker-compose -f docker-compose.yml ps app | grep -q "Up"; then
+                echo "✅ App updated and running successfully"
+              else
+                echo "❌ Error: App did not start correctly"
+                docker-compose -f docker-compose.yml ps
+                exit 1
+              fi
 
   deploy-frontend:
     runs-on: ubuntu-latest
@@ -335,22 +349,31 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ProyectoFinalQA
-            echo "Actualizando solo imagen del frontend..."
-
-            # Detener solo el contenedor del frontend
-            docker-compose stop vue-app
-            docker-compose rm -f vue-app
-
-            # Descargar nueva imagen y levantar
-            docker-compose pull vue-app
-            docker-compose up -d vue-app
-
-            # Verificar que el frontend esté corriendo
-            if docker-compose ps vue-app | grep -q "Up"; then
-              echo "Frontend actualizado exitosamente"
+            set -e
+            
+            if [ -d "app" ]; then
+              cd app
+              git fetch origin main
+              git reset --hard origin/main
             else
-              echo "Error al actualizar el frontend"
-              docker-compose ps vue-app
+              git clone --branch main https://github.com/Higinio01/ProyectoFinalQA.git app
+              cd app
+            fi
+            
+            docker-compose -f docker-compose.yml pull vue-app
+            
+            docker rm -f vue-frontend 2>/dev/null || true
+            
+            docker-compose -f docker-compose.yml up -d vue-app
+            
+            docker container prune -f
+
+            sleep 15
+            
+            if docker-compose -f docker-compose.yml ps vue-app | grep -q "Up"; then
+              echo "✅ Vue-frontend updated and running successfully"
+            else
+              echo "❌ Error: Vue-frontend did not start correctly"
+              docker-compose -f docker-compose.yml ps
               exit 1
             fi
