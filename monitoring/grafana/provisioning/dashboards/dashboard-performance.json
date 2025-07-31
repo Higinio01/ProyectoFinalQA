@@ -1,16 +1,16 @@
 {
   "id": null,
-  "title": "⚡ Performance y Carga del Sistema",
-  "tags": ["performance", "carga", "latencia"],
+  "title": "Performance y SLA - Sistema Completo",
+  "tags": ["performance", "sla", "monitoring", "latencia"],
   "timezone": "browser",
   "panels": [
     {
       "id": 1,
-      "title": "🔥 Throughput (Requests/min)",
+      "title": "Throughput Total (RPS)",
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_seconds_count[5m])) * 60",
+          "expr": "sum(rate(http_server_requests_seconds_count[5m]))",
           "legendFormat": "Total RPS"
         }
       ],
@@ -20,44 +20,20 @@
           "thresholds": {
             "steps": [
               {"color": "red", "value": 0},
-              {"color": "yellow", "value": 10},
-              {"color": "green", "value": 50}
+              {"color": "yellow", "value": 1},
+              {"color": "green", "value": 10}
             ]
           },
-          "unit": "rpm"
+          "unit": "reqps",
+          "decimals": 2
         }
       },
       "gridPos": {"h": 6, "w": 6, "x": 0, "y": 0}
     },
-    {
-      "id": 2,
-      "title": "⏱️ Latencia Promedio",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "rate(http_server_requests_seconds_sum[5m]) / rate(http_server_requests_seconds_count[5m])",
-          "legendFormat": "Avg Latency"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {"mode": "thresholds"},
-          "thresholds": {
-            "steps": [
-              {"color": "green", "value": 0},
-              {"color": "yellow", "value": 0.5},
-              {"color": "red", "value": 2}
-            ]
-          },
-          "unit": "s",
-          "decimals": 3
-        }
-      },
-      "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0}
-    },
+
     {
       "id": 3,
-      "title": "🎯 Success Rate (%)",
+      "title": "Success Rate Global (%)",
       "type": "stat",
       "targets": [
         {
@@ -75,56 +51,39 @@
               {"color": "green", "value": 99}
             ]
           },
-          "unit": "percent"
-        }
-      },
-      "gridPos": {"h": 6, "w": 6, "x": 12, "y": 0}
-    },
-    {
-      "id": 4,
-      "title": "🔄 Concurrent Users (Active Sessions)",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "tomcat_sessions_active_current_sessions",
-          "legendFormat": "Active Sessions"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "color": {"mode": "thresholds"},
-          "thresholds": {
-            "steps": [
-              {"color": "green", "value": 0},
-              {"color": "yellow", "value": 100},
-              {"color": "red", "value": 500}
-            ]
-          },
-          "unit": "short"
+          "unit": "percent",
+          "decimals": 2
         }
       },
       "gridPos": {"h": 6, "w": 6, "x": 18, "y": 0}
     },
+
     {
       "id": 5,
-      "title": "📊 Request Volume por Endpoint",
+      "title": "Throughput por Endpoint",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_count[5m]) * 60",
+          "expr": "topk(10, rate(http_server_requests_seconds_count[5m]) * 60)",
           "legendFormat": "{{method}} {{uri}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "rpm"
+          "unit": "rpm",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 4,
+            "fillOpacity": 5
+          }
         }
       },
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
     },
     {
       "id": 6,
-      "title": "⚡ Response Time Distribution",
+      "title": "⚡ Distribution de Response Time",
       "type": "heatmap",
       "targets": [
         {
@@ -134,61 +93,149 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "s",
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            }
+          }
         }
       },
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
     },
     {
       "id": 7,
-      "title": "🗄️ Database Performance",
+      "title": "SLA Compliance Dashboard",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "hikaricp_connections_acquire_seconds",
-          "legendFormat": "Connection Acquire Time"
+          "expr": "(sum(rate(http_server_requests_seconds_count{status=~\"2..\"}[5m])) / sum(rate(http_server_requests_seconds_count[5m]))) * 100",
+          "legendFormat": "Success Rate %"
         },
         {
-          "expr": "hikaricp_connections_usage_seconds",
-          "legendFormat": "Connection Usage Time"
+          "expr": "99",
+          "legendFormat": "SLA Target (99%)"
+        },
+        {
+          "expr": "95",
+          "legendFormat": "Warning Threshold (95%)"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
-        }
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "SLA Target (99%)"},
+            "properties": [
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}},
+              {"id": "custom.drawStyle", "value": "line"},
+              {"id": "custom.lineStyle", "value": {"dash": [10, 10], "fill": "dash"}}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Warning Threshold (95%)"},
+            "properties": [
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "yellow"}},
+              {"id": "custom.drawStyle", "value": "line"},
+              {"id": "custom.lineStyle", "value": {"dash": [5, 5], "fill": "dash"}}
+            ]
+          }
+        ]
       },
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
     },
     {
       "id": 8,
-      "title": "💾 Memory Pressure",
+      "title": "Latencia Percentiles Global",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "jvm_memory_used_bytes{area=\"heap\"}",
-          "legendFormat": "Heap Used"
+          "expr": "histogram_quantile(0.50, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P50 (Median)"
         },
         {
-          "expr": "jvm_memory_committed_bytes{area=\"heap\"}",
-          "legendFormat": "Heap Committed"
+          "expr": "histogram_quantile(0.90, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P90"
         },
         {
-          "expr": "jvm_memory_max_bytes{area=\"heap\"}",
-          "legendFormat": "Heap Max"
+          "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket[5m]))",
+          "legendFormat": "P99"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes"
-        }
+          "unit": "s",
+          "decimals": 3,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "P99"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "P95"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]
+          }
+        ]
       },
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+    },
+    {
+      "id": 9,
+      "title": "Error Rate por Status Code",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(http_server_requests_seconds_count{status!~\"2..\"}[5m])) * 60",
+          "legendFormat": "{{status}} errors/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 4
+          }
+        }
+      },
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 22}
     }
   ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
-  "refresh": "30s"
+  "refresh": "30s",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "schemaVersion": 37,
+  "style": "dark",
+  "templating": {
+    "list": []
+  },
+  "timepicker": {},
+  "weekStart": ""
 }

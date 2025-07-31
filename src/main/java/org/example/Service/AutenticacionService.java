@@ -36,7 +36,6 @@ public class AutenticacionService {
 
     public TokenResponse login(LoginRequest loginRequest) {
         try {
-            // Validación de input básica
             if (loginRequest.email() == null || loginRequest.email().trim().isEmpty()) {
                 log.warn("Intento de login con email vacío");
                 throw new BadCredentialsException("Email requerido");
@@ -50,7 +49,6 @@ public class AutenticacionService {
             String cleanEmail = loginRequest.email().trim();
             log.info("Intento de login para usuario: {}", cleanEmail);
 
-            // Autenticación - AQUÍ ES DONDE SE LANZA BadCredentialsException
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             cleanEmail,
@@ -60,20 +58,17 @@ public class AutenticacionService {
 
             log.info("Autenticación exitosa para usuario: {}", cleanEmail);
 
-            // Buscar usuario en BD
             var usuario = usuarioRepository.findByEmail(cleanEmail)
                     .orElseThrow(() -> {
                         log.warn("Usuario autenticado pero no encontrado en BD: {}", cleanEmail);
                         return new ResourceNotFoundException("Usuario no encontrado");
                     });
 
-            // Verificar estado del usuario
             if (!usuario.getEstado().equals(EstadoUsuario.ACTIVO)) {
                 log.warn("Usuario inactivo intentó hacer login: {}", cleanEmail);
                 throw new BadCredentialsException("Usuario inactivo o bloqueado");
             }
 
-            // Generar o reutilizar token
             var tokenActivo = apiTokenRepository.findByUsuarioId(usuario.getId());
 
             String jwtToken;
@@ -92,17 +87,14 @@ public class AutenticacionService {
             return new TokenResponse(jwtToken);
 
         } catch (BadCredentialsException e) {
-            // Esta excepción se lanza cuando las credenciales son incorrectas
             log.warn("Credenciales inválidas para email: {}", loginRequest.email());
-            throw e; // Re-lanzar para que GlobalExceptionHandler la maneje
+            throw e;
 
         } catch (ResourceNotFoundException e) {
-            // Usuario no encontrado
             log.warn("Usuario no encontrado: {}", loginRequest.email());
-            throw new BadCredentialsException("Credenciales inválidas"); // No revelar que el usuario no existe
+            throw new BadCredentialsException("Credenciales inválidas");
 
         } catch (Exception e) {
-            // Cualquier otro error inesperado
             log.error("Error inesperado durante login para email: {}", loginRequest.email(), e);
             throw new RuntimeException("Error interno durante la autenticación", e);
         }

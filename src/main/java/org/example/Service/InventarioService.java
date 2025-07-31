@@ -90,20 +90,9 @@ public class InventarioService {
         return movimientoInventarioRepository.findAll(spec, pageable);
     }
 
-
-
     public List<MovimientoInventario> obtenerHistorialPorProducto(Long productoId) {
         return movimientoInventarioRepository.findByProductoIdOrderByFechaMovimientoDesc(productoId);
     }
-
-//    public Page<MovimientoInventario> obtenerMovimientosConFiltros(
-//            Long productoId, String tipoMovimiento, String usuarioResponsable,
-//            LocalDateTime fechaInicio, LocalDateTime fechaFin, int page, int size) {
-//
-//        Pageable pageable = PageRequest.of(page, size);
-//        return movimientoInventarioRepository.findMovimientosConFiltros(
-//                productoId, tipoMovimiento, usuarioResponsable, fechaInicio, fechaFin, pageable);
-//    }
 
     public List<MovimientoInventario> obtenerMovimientosPorTipo(String tipoMovimiento) {
         return movimientoInventarioRepository.findByTipoMovimientoOrderByFechaMovimientoDesc(tipoMovimiento.toUpperCase());
@@ -168,8 +157,5 @@ public class InventarioService {
                 ))
                 .toList();
     }
-
-
-
 
 }

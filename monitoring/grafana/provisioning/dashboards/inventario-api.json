@@ -1,12 +1,12 @@
 {
   "id": null,
-  "title": "Sistema de Inventario - Dashboard Completo",
-  "tags": ["inventario", "productos", "spring-boot"],
+  "title": "Sistema de Inventario - Overview",
+  "tags": ["inventario", "business", "api", "productos"],
   "timezone": "browser",
   "panels": [
     {
       "id": 1,
-      "title": "Estado General de la API",
+      "title": "🟢 Estado de la API de Inventario",
       "type": "stat",
       "targets": [
         {
@@ -24,8 +24,8 @@
             ]
           },
           "mappings": [
-            {"options": {"0": {"text": "🔴 DOWN"}}, "type": "value"},
-            {"options": {"1": {"text": "🟢 UP"}}, "type": "value"}
+            {"options": {"0": {"text": "🔴 API DOWN"}}, "type": "value"},
+            {"options": {"1": {"text": "🟢 API UP"}}, "type": "value"}
           ]
         }
       },
@@ -33,12 +33,12 @@
     },
     {
       "id": 2,
-      "title": "Requests Totales/min",
+      "title": "Requests de Productos/min",
       "type": "stat",
       "targets": [
         {
-          "expr": "rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m]) * 60",
-          "legendFormat": "Requests/min"
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m])) * 60",
+          "legendFormat": "Productos RPM"
         }
       ],
       "fieldConfig": {
@@ -46,9 +46,9 @@
           "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
-              {"color": "yellow", "value": 100},
-              {"color": "red", "value": 500}
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 10},
+              {"color": "green", "value": 50}
             ]
           },
           "unit": "rpm"
@@ -58,12 +58,12 @@
     },
     {
       "id": 3,
-      "title": "Tiempo Respuesta Promedio",
+      "title": "Tiempo Respuesta Productos",
       "type": "stat",
       "targets": [
         {
           "expr": "rate(http_server_requests_seconds_sum{uri=~\"/api/productos.*\"}[5m]) / rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m])",
-          "legendFormat": "Avg Response"
+          "legendFormat": "Avg Response Time"
         }
       ],
       "fieldConfig": {
@@ -71,7 +71,7 @@
           "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {"color": "green", "value": null},
+              {"color": "green", "value": 0},
               {"color": "yellow", "value": 0.5},
               {"color": "red", "value": 2}
             ]
@@ -84,12 +84,12 @@
     },
     {
       "id": 4,
-      "title": "Errores 5xx",
+      "title": "Success Rate Productos (%)",
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=~\"5..\"}[5m])) * 60",
-          "legendFormat": "Errors/min"
+          "expr": "(sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=~\"2..\"}[5m])) / sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m]))) * 100",
+          "legendFormat": "Success Rate"
         }
       ],
       "fieldConfig": {
@@ -97,19 +97,20 @@
           "color": {"mode": "thresholds"},
           "thresholds": {
             "steps": [
-              {"color": "green", "value": 0},
-              {"color": "yellow", "value": 1},
-              {"color": "red", "value": 5}
+              {"color": "red", "value": 0},
+              {"color": "yellow", "value": 95},
+              {"color": "green", "value": 99}
             ]
           },
-          "unit": "rpm"
+          "unit": "percent",
+          "decimals": 1
         }
       },
       "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
     },
     {
       "id": 5,
-      "title": "📊 Requests por Endpoint de Productos",
+      "title": "Requests por Endpoint de Productos",
       "type": "timeseries",
       "targets": [
         {
@@ -123,7 +124,8 @@
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "pointSize": 5
+            "pointSize": 5,
+            "fillOpacity": 10
           }
         }
       },
@@ -131,68 +133,108 @@
     },
     {
       "id": 6,
-      "title": "💾 Uso de Memoria JVM",
+      "title": "Errores 4xx/5xx en Productos",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "jvm_memory_used_bytes{area=\"heap\"} / 1024 / 1024",
-          "legendFormat": "Heap Used (MB)"
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=~\"4..\"}[5m])) * 60",
+          "legendFormat": "Errores 4xx/min"
         },
         {
-          "expr": "jvm_memory_max_bytes{area=\"heap\"} / 1024 / 1024",
-          "legendFormat": "Heap Max (MB)"
+          "expr": "sum(rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\", status=~\"5..\"}[5m])) * 60",
+          "legendFormat": "Errores 5xx/min"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "MB",
+          "unit": "rpm",
           "custom": {
-            "fillOpacity": 10
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 5
           }
-        }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Errores 4xx/min"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "orange"}}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "Errores 5xx/min"},
+            "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]
+          }
+        ]
       },
-      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 12}
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
     },
     {
       "id": 7,
-      "title": "🗄️ Conexiones a Base de Datos",
-      "type": "timeseries",
+      "title": "Throughput de Productos por Método",
+      "type": "piechart",
       "targets": [
         {
-          "expr": "hikaricp_connections_active",
-          "legendFormat": "Conexiones Activas"
-        },
-        {
-          "expr": "hikaricp_connections_idle",
-          "legendFormat": "Conexiones Idle"
-        },
-        {
-          "expr": "hikaricp_connections_max",
-          "legendFormat": "Conexiones Máximas"
+          "expr": "sum by (method) (rate(http_server_requests_seconds_count{uri=~\"/api/productos.*\"}[5m])) * 60",
+          "legendFormat": "{{method}}"
         }
       ],
-      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 12}
+      "fieldConfig": {
+        "defaults": {
+          "unit": "rpm",
+          "custom": {
+            "displayMode": "table",
+            "placement": "right"
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
     },
     {
       "id": 8,
-      "title": "🧵 Threads JVM",
+      "title": "Response Time Percentiles - Productos",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "jvm_threads_live_threads",
-          "legendFormat": "Threads Activos"
+          "expr": "histogram_quantile(0.50, rate(http_server_requests_seconds_bucket{uri=~\"/api/productos.*\"}[5m]))",
+          "legendFormat": "P50"
         },
         {
-          "expr": "jvm_threads_daemon_threads",
-          "legendFormat": "Threads Daemon"
+          "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri=~\"/api/productos.*\"}[5m]))",
+          "legendFormat": "P95"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{uri=~\"/api/productos.*\"}[5m]))",
+          "legendFormat": "P99"
         }
       ],
-      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 12}
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 3,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
+        }
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
     }
   ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
-  "refresh": "30s"
+  "refresh": "30s",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "schemaVersion": 37,
+  "style": "dark",
+  "templating": {
+    "list": []
+  },
+  "timepicker": {},
+  "weekStart": ""
 }
