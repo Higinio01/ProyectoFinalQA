@@ -285,7 +285,7 @@ jobs:
 
   deploy-backend:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -326,7 +326,7 @@ jobs:
 
   deploy-frontend:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Deploy Frontend to EC2
         uses: appleboy/ssh-action@v0.1.10
