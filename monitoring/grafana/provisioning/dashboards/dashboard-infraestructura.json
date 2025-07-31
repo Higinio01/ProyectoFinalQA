@@ -1,7 +1,7 @@
 {
   "id": null,
-  "title": "🏗️ Infraestructura y Salud del Sistema",
-  "tags": ["infraestructura", "salud", "sistema"],
+  "title": "Infraestructura y Salud del Sistema",
+  "tags": ["infrastructure", "system", "resources", "health"],
   "timezone": "browser",
   "panels": [
     {
@@ -20,6 +20,10 @@
         {
           "expr": "up{job=\"grafana\"}",
           "legendFormat": "Grafana"
+        },
+        {
+          "expr": "up{job=\"mysql\"}",
+          "legendFormat": "Database"
         }
       ],
       "fieldConfig": {
@@ -46,7 +50,7 @@
       "targets": [
         {
           "expr": "(jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"}) * 100",
-          "legendFormat": "Heap Memory %"
+          "legendFormat": "Heap Usage %"
         }
       ],
       "fieldConfig": {
@@ -68,12 +72,16 @@
     },
     {
       "id": 3,
-      "title": "🔥 CPU Usage",
+      "title": "CPU Usage (%)",
       "type": "gauge",
       "targets": [
         {
           "expr": "system_cpu_usage * 100",
-          "legendFormat": "CPU %"
+          "legendFormat": "System CPU"
+        },
+        {
+          "expr": "process_cpu_usage * 100",
+          "legendFormat": "Process CPU"
         }
       ],
       "fieldConfig": {
@@ -95,78 +103,241 @@
     },
     {
       "id": 4,
-      "title": "🗄️ Conexiones de Base de Datos",
+      "title": "Memoria JVM Detallada",
       "type": "timeseries",
       "targets": [
         {
-          "expr": "hikaricp_connections_active",
-          "legendFormat": "Activas"
+          "expr": "jvm_memory_used_bytes{area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Heap Used (MB)"
         },
         {
-          "expr": "hikaricp_connections_idle",
-          "legendFormat": "Idle"
+          "expr": "jvm_memory_committed_bytes{area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Heap Committed (MB)"
         },
         {
-          "expr": "hikaricp_connections_max",
-          "legendFormat": "Máximo"
+          "expr": "jvm_memory_max_bytes{area=\"heap\"} / 1024 / 1024",
+          "legendFormat": "Heap Max (MB)"
         },
         {
-          "expr": "hikaricp_connections_pending",
-          "legendFormat": "Pendientes"
+          "expr": "jvm_memory_used_bytes{area=\"nonheap\"} / 1024 / 1024",
+          "legendFormat": "Non-Heap Used (MB)"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short"
-        }
+          "unit": "MB",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "fillOpacity": 10,
+            "pointSize": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Heap Max (MB)"},
+            "properties": [
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}},
+              {"id": "custom.fillOpacity", "value": 0},
+              {"id": "custom.lineStyle", "value": {"dash": [10, 10], "fill": "dash"}}
+            ]
+          }
+        ]
       },
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 6}
     },
+
     {
-      "id": 5,
-      "title": "🧵 Threads JVM",
+      "id": 6,
+      "title": "Threads JVM",
       "type": "timeseries",
       "targets": [
         {
           "expr": "jvm_threads_live_threads",
-          "legendFormat": "Live Threads"
+          "legendFormat": "Threads Activos"
         },
         {
           "expr": "jvm_threads_daemon_threads",
-          "legendFormat": "Daemon Threads"
+          "legendFormat": "Threads Daemon"
         },
         {
           "expr": "jvm_threads_peak_threads",
           "legendFormat": "Peak Threads"
-        }
-      ],
-      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 6}
-    },
-    {
-      "id": 6,
-      "title": "💽 Garbage Collection",
-      "type": "timeseries",
-      "targets": [
-        {
-          "expr": "rate(jvm_gc_pause_seconds_sum[5m])",
-          "legendFormat": "GC Time/sec"
         },
         {
-          "expr": "rate(jvm_gc_pause_seconds_count[5m])",
-          "legendFormat": "GC Count/sec"
+          "expr": "jvm_threads_started_threads",
+          "legendFormat": "Threads Started (Total)"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "s"
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
         }
       },
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 14}
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 14}
+    },
+    {
+      "id": 7,
+      "title": "Garbage Collection",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(jvm_gc_pause_seconds_sum[5m])",
+          "legendFormat": "GC Pause Time/sec"
+        },
+        {
+          "expr": "rate(jvm_gc_pause_seconds_count[5m])",
+          "legendFormat": "GC Collections/sec"
+        },
+        {
+          "expr": "jvm_gc_max_data_size_bytes / 1024 / 1024",
+          "legendFormat": "GC Max Data Size (MB)"
+        },
+        {
+          "expr": "jvm_gc_live_data_size_bytes / 1024 / 1024",
+          "legendFormat": "GC Live Data Size (MB)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byRegexp", "options": "/.*Time.*|.*Pause.*/"},
+            "properties": [{"id": "unit", "value": "s"}]
+          },
+          {
+            "matcher": {"id": "byRegexp", "options": "/.*Collections.*/"},
+            "properties": [{"id": "unit", "value": "ops"}]
+          },
+          {
+            "matcher": {"id": "byRegexp", "options": "/.*Size.*/"},
+            "properties": [{"id": "unit", "value": "MB"}]
+          }
+        ]
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 14}
+    },
+    {
+      "id": 8,
+      "title": "Performance de Base de Datos",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_acquire_seconds",
+          "legendFormat": "Connection Acquire Time"
+        },
+        {
+          "expr": "hikaricp_connections_usage_seconds",
+          "legendFormat": "Connection Usage Time"
+        },
+        {
+          "expr": "hikaricp_connections_creation_seconds",
+          "legendFormat": "Connection Creation Time"
+        },
+        {
+          "expr": "hikaricp_connections_timeout_total",
+          "legendFormat": "Connection Timeouts"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "Connection Timeouts"},
+            "properties": [
+              {"id": "unit", "value": "short"},
+              {"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}
+            ]
+          }
+        ]
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 22}
+    },
+    {
+      "id": 9,
+      "title": "Métricas del Sistema",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "system_load_average_1m",
+          "legendFormat": "Load Average 1m"
+        },
+        {
+          "expr": "system_cpu_count",
+          "legendFormat": "CPU Cores"
+        },
+        {
+          "expr": "jvm_classes_loaded_classes",
+          "legendFormat": "JVM Classes Loaded"
+        },
+        {
+          "expr": "jvm_buffer_memory_used_bytes{id=\"direct\"} / 1024 / 1024",
+          "legendFormat": "Direct Buffer Memory (MB)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "pointSize": 3
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "CPU Cores"},
+            "properties": [
+              {"id": "unit", "value": "short"},
+              {"id": "custom.drawStyle", "value": "line"},
+              {"id": "custom.lineStyle", "value": {"dash": [5, 5], "fill": "dash"}}
+            ]
+          },
+          {
+            "matcher": {"id": "byRegexp", "options": "/.*Memory.*/"},
+            "properties": [{"id": "unit", "value": "MB"}]
+          },
+          {
+            "matcher": {"id": "byRegexp", "options": "/.*Classes.*/"},
+            "properties": [{"id": "unit", "value": "short"}]
+          }
+        ]
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 22}
     }
   ],
   "time": {
     "from": "now-1h",
     "to": "now"
   },
-  "refresh": "30s"
+  "refresh": "30s",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "schemaVersion": 37,
+  "style": "dark",
+  "templating": {
+    "list": []
+  },
+  "timepicker": {},
+  "weekStart": ""
 }
